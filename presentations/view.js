@@ -39,20 +39,26 @@ export function createView(stage, deck, onMediaClick = () => {}, onChange = () =
     get index(){return index;},media,currentMedia,show,
     setInteractive(value){
       stage.classList.toggle('read-only',!value);
-      media.forEach(el=>{el.tabIndex=value?0:-1;});
+      media.forEach(el=>{el.tabIndex=value?0:-1;el.style.pointerEvents=value?'auto':'none';});
     },
     playback(){
-      return currentMedia().map(el=>{
-        const layer=Number(el.dataset.layer),data=deck.slides[index].layers[layer];
-        return {layer,time:el.currentTime,duration:Number.isFinite(el.duration)?el.duration:0,paused:el.paused,muted:el.muted,volume:el.volume,rate:el.playbackRate};
-      });
+      return currentMedia().map(el=>({
+        layer:Number(el.dataset.layer),
+        time:el.currentTime,
+        duration:Number.isFinite(el.duration)?el.duration:0,
+        paused:el.paused,
+        muted:el.muted,
+        volume:el.volume,
+        rate:el.playbackRate
+      }));
     },
     apply(state,delay=0){
       show(state.index);
       for(const el of currentMedia()){
         const playback=state.media?.find(item=>item.layer===Number(el.dataset.layer));
-        el.muted=true;
         if(!playback||state.blackout){el.pause();continue;}
+        el.volume=Math.max(0,Math.min(1,Number.isFinite(playback.volume)?playback.volume:.8));
+        el.muted=Boolean(playback.muted);
         const target=Math.max(0,playback.time+(playback.paused?0:delay*(playback.rate||1)));
         if(Number.isFinite(el.duration)&&Math.abs(el.currentTime-target)>(playback.paused?0.06:0.35))el.currentTime=Math.min(el.duration,target);
         el.playbackRate=playback.rate||1;

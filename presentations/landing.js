@@ -1,19 +1,28 @@
-import {loadPublishedDeck} from './deck.js?v=localdeck7';
-import {createView} from './view.js?v=localdeck7';
+import {loadPublishedDeck} from './deck.js?v=control8';
+import {createView} from './view.js?v=control8';
 import {connectViewer,controllerURL,drawQR} from './transport.js?v=min6';
 
 const $=id=>document.getElementById(id);
-let deck,view,channel,controller=null,lastSeen=0,lastVersion=-1,retryTimer;
+let deck,view,channel,controller=null,lastSeen=0,lastVersion=-1,retryTimer,fullscreenAttempted=false;
 const status=text=>$('presentation-status').textContent=text;
 
+async function leaveNativeFullscreen(){
+  if(document.fullscreenElement)try{await document.exitFullscreen();}catch{}
+}
+async function tryNativeFullscreen(){
+  if(document.fullscreenElement)return;
+  try{await document.documentElement.requestFullscreen({navigationUI:'hide'});}catch{}
+}
 function idle(){
   $('idle').hidden=false;$('live').hidden=true;document.body.classList.remove('presenting');
-  $('viewer-blackout').hidden=true;controller=null;lastSeen=0;lastVersion=-1;
+  $('viewer-blackout').hidden=true;controller=null;lastSeen=0;lastVersion=-1;fullscreenAttempted=false;
   if(view){view.show(0);view.currentMedia().forEach(media=>media.pause());}
+  leaveNativeFullscreen();
   status('Waiting for controller.');
 }
 function live(){
   $('idle').hidden=true;$('live').hidden=false;document.body.classList.add('presenting');
+  if(!fullscreenAttempted){fullscreenAttempted=true;tryNativeFullscreen();}
 }
 function validState(data){
   return Number.isSafeInteger(data.version)&&data.version>lastVersion&&
@@ -32,9 +41,7 @@ function receive(data,uuid){
   }
   if(data.type==='ended'){idle();restart(500);}
 }
-function restart(delay=1500){
-  clearTimeout(retryTimer);retryTimer=setTimeout(connect,delay);
-}
+function restart(delay=1500){clearTimeout(retryTimer);retryTimer=setTimeout(connect,delay);}
 async function connect(){
   try{await channel?.close();}catch{}
   channel=null;controller=null;
@@ -53,11 +60,8 @@ async function boot(){
     const first=deck.slides?.[0]?.layers?.find(layer=>layer.kind==='image');
     if(first)$('cover').src=first.src;
     view=createView($('viewer-stage'),deck);
-    view.setInteractive(false);
-    view.show(0);
-  }catch{
-    status('Presentation unavailable.');
-  }
+    view.setInteractive(false);view.show(0);
+  }catch{status('Presentation unavailable.');}
   idle();connect();
   setInterval(()=>{
     if(channel&&controller)channel.send({type:'ping'},controller);

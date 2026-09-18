@@ -5,18 +5,22 @@
   <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="dark"><meta name="theme-color" content="#000">
   <title>Presenter — Ra.</title><link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/styles.css?v=localdeck7"><link rel="stylesheet" href="/presentations/player.css?v=localdeck7">
-  <script type="module" src="/presentations/controller.js?v=localdeck7"></script>
+  <link rel="stylesheet" href="/styles.css?v=control8"><link rel="stylesheet" href="/presentations/player.css?v=control8">
+  <script type="module" src="/presentations/controller.js?v=control8"></script>
 </head>
 <body class="controller-page">
 <main class="controller-shell">
   <header class="controller-header"><a href="/" class="wordmark">Ra.</a><span id="controller-status">Connecting…</span></header>
   <section id="controller-panel" hidden>
-    <div id="controller-stage" class="controller-stage"></div>
+    <div id="controller-stage" class="controller-stage" aria-label="Tap presentation media to play or pause"></div>
     <div class="controller-meta"><span id="controller-title">Beyond the Line</span><span id="controller-count">1 / 16</span></div>
     <div class="controller-nav"><button data-action="prev">← Back</button><button data-action="next">Next →</button></div>
-    <div class="controller-media"><button data-action="play" id="controller-play">Play / pause</button><button data-action="blackout">Black screen</button></div>
+    <div class="controller-media"><button data-action="play" id="controller-play">Play video</button><button data-action="blackout">Black screen</button></div>
     <label class="controller-seek">Media position<input id="controller-seek" type="range" min="0" max="1000" value="0"></label>
+    <label class="controller-volume">
+      <span>Volume</span><output id="controller-volume-value">80%</output>
+      <input id="controller-volume" type="range" min="0" max="100" value="80" aria-label="Presentation volume">
+    </label>
     <button id="finish-presentation" class="finish-button">Finish presentation</button>
   </section>
 </main>
