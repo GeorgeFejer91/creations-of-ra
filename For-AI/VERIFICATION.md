@@ -6,10 +6,7 @@ V.2 writes were applied to the actual CreationsOfRa workspace. Browser checks us
 
 These are application-behavior checks, NOT live VDO.Ninja signaling, physical QR scans, physical iOS/Android tests, or real Pretext-CDN integration. Network browser navigation in the authoring container returned `net::ERR_BLOCKED_BY_ADMINISTRATOR`, so those tests could not run here. Cross-device copied-link ownership should also be exercised in a network-enabled browser.
 
-Canonical preload upload was attempted through V.2 and failed exactly with:
-`{"error":{"code":"file_too_large","message":"'assets/Beyond_the_Line_Rabia_Saleemi.pptx' exceeds the configured per-file limit.","path":"direct"}}`
-
-The code automatically requests that path; public media preload remains incomplete until an authorized upload succeeds. Do not mark the full presentation product PASS solely because Pages deploys the text files.
+The canonical `assets/Beyond_the_Line_Rabia_Saleemi.pptx` is now published successfully through V.2 and is the primary browser source. Verification must confirm that each viewer downloads/renders that deck locally; VDO.Ninja must carry control/state only and never image/video payloads.
 
 Run checks against the actual deployed URL as well as local code. Record observed results; do not relabel a mock test as a physical-phone test.
 
@@ -23,7 +20,7 @@ Original supplied file yields 16 slides and exactly three HTML video elements on
 
 ## Presenter handshake
 
-Use one smartphone controller and at least two ordinary browsers on `/presentations/`. With no controller, both browsers show the first-slide preview and the controller QR. Scanning the QR on the phone must claim the fixed controller stream without a name or approval step; a second phone must fail while that stream remains live. Both ordinary browsers must automatically become viewport-filling synchronized viewers with no controls, including a browser opened after control starts. Verify slide navigation, media position and blackout. `Finish presentation`, closing the controller, or controller disconnect must return every viewer to the preview/QR state. No camera/microphone prompts.
+Use one smartphone controller and at least two ordinary browsers on `/presentations/`. With no controller, both browsers show the original first-slide preview, concise project metadata and the controller QR. Scanning the QR on the phone must claim the fixed controller stream without a name or approval step; a second phone must fail while that stream remains live. Inspect data messages: they may contain only compact control/state values and must never contain base64 images, screenshots, video frames or presentation media. Each ordinary browser must load the canonical published PPTX itself and automatically become a viewport-filling synchronized viewer with no controls. Verify slide changes and video play/pause/seek on the phone produce the same local actions in both browsers, including one opened after control starts. Verify blackout and finish/disconnect return. No camera/microphone prompts.
 
 Test the three real videos and phone hotspot controls. Native fullscreen can require a local click. Audible playback can require local activation; test blocked play and the visible recovery button instead of claiming arbitrary remote activation works. Test actual iOS Safari / Android Chrome before claiming those platforms verified.
 
@@ -43,4 +40,4 @@ An actual attachment-to-PC binary upload action is not exposed by the current MC
 - Chromium offline rendering: 320/390/768/1440px, complete biography and no horizontal/text overflow. Original embedded video played and paused.
 - Presenter application logic: name request, deny without repeated prompt, approve, next, black screen, miniature preview, unapproved-sender refusal and revoke passed with explicit transport/measurement test doubles.
 - This authoring container blocks browser network navigation; actual CDN/Pretext integration, VDO.Ninja signaling, physical QR scanning and physical iOS/Android devices were NOT verified here. Do not label these checks as a live phone test.
-- The source PPTX is now present in the PC workspace, but direct MCP publication returned file_too_large for its 41,815,513 bytes. Converted media must be published through an authorized upload path. A browser-local PowerPoint import is not a public asset upload.
+- The 41,815,513-byte canonical PPTX is published at `/assets/Beyond_the_Line_Rabia_Saleemi.pptx` and is the normal viewer/controller source.

@@ -3,29 +3,40 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark"><meta name="theme-color" content="#000">
-  <title>Presentations — Ra.</title><meta name="robots" content="index,follow">
+  <title>Presentations — Ra.</title>
+  <meta name="description" content="Beyond the Line — Rabia Saleemi, Manchester Museum Partition Project.">
+  <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://creations-of-ra.com/presentations/"><link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/styles.css?v=min6"><link rel="stylesheet" href="/presentations/player.css?v=min6">
-  <script type="module" src="/presentations/landing.js?v=min6"></script>
+  <link rel="stylesheet" href="/styles.css?v=localdeck7"><link rel="stylesheet" href="/presentations/player.css?v=localdeck7">
+  <script type="module" src="/presentations/landing.js?v=localdeck7"></script>
 </head>
 <body class="presentation-page">
 <main id="presentation-app">
   <section id="idle" class="presentation-idle">
-    <a class="presentation-home" href="/" aria-label="Ra home">Ra.</a>
+    <header class="presentation-header">
+      <a class="presentation-home" href="/" aria-label="Ra home">Ra.</a>
+      <div class="presentation-heading">
+        <h1>Beyond the Line</h1>
+        <p>Rabia Saleemi · Manchester Museum Partition Project</p>
+        <p class="presentation-meta">16 slides · 3 films</p>
+      </div>
+    </header>
     <div class="presentation-card">
-      <div class="presentation-preview"><img id="cover" alt="Beyond the Line first slide"></div>
+      <figure class="presentation-preview">
+        <img id="cover" alt="Beyond the Line, first slide">
+      </figure>
       <aside class="controller-qr" aria-label="Connect presentation controller">
         <div id="controller-qr" class="qr"></div>
         <div class="controller-label">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6.5" y="2" width="11" height="20" rx="2"/><path d="M10 5h4M10 19h4"/></svg>
           <span>Scan to control</span>
         </div>
+        <p>One phone controls the presentation.</p>
       </aside>
     </div>
   </section>
   <section id="live" class="presentation-live" hidden aria-label="Live presentation">
     <div id="viewer-stage" class="stage"></div>
-    <img id="viewer-frame" class="viewer-frame" alt="" hidden>
     <div id="viewer-blackout" class="black-screen" hidden></div>
   </section>
   <p id="presentation-status" class="sr-only" role="status">Waiting for controller.</p>
