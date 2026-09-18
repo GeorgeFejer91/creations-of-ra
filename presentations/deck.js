@@ -38,10 +38,29 @@ export async function importPowerPoint(buffer){
  return {title:'Beyond the Line',width,height,slides,dispose:()=>urls.forEach(URL.revokeObjectURL)};
  }catch(error){urls.forEach(URL.revokeObjectURL);throw error;}
 }
-export async function loadPublishedDeck(){
- const response=await fetch('/assets/beyond-the-line/deck.json',{cache:'no-cache'});
- if(response.ok){const deck=await response.json();if(!Array.isArray(deck.slides)||!deck.slides.length)throw new Error('Invalid published presentation.');return deck;}
- const source=await fetch('/assets/beyond-the-line.pptx');
- if(!source.ok)throw new Error('Choose the original PowerPoint to present from this browser. Published slide assets have not been uploaded yet.');
- return importPowerPoint(await source.arrayBuffer());
+// The owner-supplied canonical PPTX is tried first, so an older manifest cannot mask it.
+export const MAIN_PPTX = '/assets/Beyond_the_Line_Rabia_Saleemi.pptx';
+let publishedDeck;
+export function loadPublishedDeck() {
+ if (!publishedDeck) publishedDeck = load().catch(error => { publishedDeck = null; throw error; });
+ return publishedDeck;
+}
+async function load() {
+ const candidates = [MAIN_PPTX, '/assets/beyond-the-line/deck.json', '/assets/beyond-the-line.pptx'];
+ for (const path of candidates) {
+  const response = await fetch(path, {cache:'no-cache'});
+  if (response.status === 404) continue;
+  if (!response.ok) throw new Error(`Presentation download failed (${response.status}). Please retry.`);
+  if (path.endsWith('.json')) {
+   const deck = await response.json();
+   if (!Array.isArray(deck.slides) || !deck.slides.length || !deck.width || !deck.height) throw new Error('Invalid published presentation manifest.');
+   deck.source = 'published'; return deck;
+  }
+  const bytes = await response.arrayBuffer();
+  const deck = await importPowerPoint(bytes);
+  deck.source = 'published';
+  deck.sourceSha256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2,'0')).join('');
+  return deck;
+ }
+ throw new Error('The preloaded PowerPoint is not published yet. Open the supplied file locally, or publish assets/Beyond_the_Line_Rabia_Saleemi.pptx.');
 }

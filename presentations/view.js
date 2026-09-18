@@ -1,0 +1,85 @@
+// Shared slide rendering. Only the display changes state; joined browsers apply snapshots.
+export function createView(stage, deck, onMediaClick = () => {}, onChange = () => {}) {
+  stage.replaceChildren(); stage.style.aspectRatio = String(deck.width / deck.height);
+  const resize = new ResizeObserver(([entry]) => {
+    const ratio = deck.width / deck.height;
+    const width = Math.min(entry.contentRect.width, entry.contentRect.height * ratio);
+    stage.style.width = `${width}px`; stage.style.height = `${width / ratio}px`;
+  });
+  resize.observe(stage.parentElement);
+  let index = 0;
+  const media = [], panes = [];
+  const canvas = document.createElement('canvas');
+  canvas.width = 720; canvas.height = Math.round(720 * deck.height / deck.width);
+  deck.slides.forEach((slide, n) => {
+    const pane = document.createElement('section'); pane.className = 'slide'; pane.hidden = n !== 0;
+    pane.setAttribute('aria-label', `Slide ${n + 1}: ${slide.title}`);
+    slide.layers.forEach((layer, j) => {
+      const element = document.createElement(layer.kind === 'image' ? 'img' : layer.kind === 'audio' ? 'audio' : 'video');
+      element.className = 'layer'; element.dataset.layer = String(j); element.dataset.slide = String(n);
+      ['left', 'top', 'width', 'height'].forEach((key, i) => { element.style[key] = `${layer.box[i] * 100}%`; });
+      element.src = layer.src;
+      if (layer.kind === 'image') {
+        element.alt = slide.title; element.draggable = false;
+        element.addEventListener('load', onChange);
+      } else {
+        element.classList.add('media-layer'); element.poster = layer.poster;
+        element.preload = 'metadata'; element.playsInline = true; element.controls = false;
+        element.volume = layer.volume ?? 0.8; element.tabIndex = -1;
+        element.setAttribute('aria-label', `Play or pause ${layer.label}`);
+        element._poster = new Image(); element._poster.src = layer.poster;
+        element.addEventListener('click', () => onMediaClick(j));
+        element.addEventListener('keydown', event => {
+          if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); onMediaClick(j); }
+        });
+        for (const name of ['play', 'pause', 'ended', 'loadedmetadata', 'volumechange', 'seeked']) element.addEventListener(name, onChange);
+        media.push(element);
+      }
+      pane.append(element);
+    });
+    panes.push(pane); stage.append(pane);
+  });
+  const currentMedia = () => media.filter(el => Number(el.dataset.slide) === index);
+  function show(next) {
+    if (!Number.isInteger(next) || next < 0 || next >= panes.length || next === index) return;
+    currentMedia().forEach(el => el.pause()); panes[index].hidden = true; index = next; panes[index].hidden = false;
+  }
+  return {
+    get index() { return index; }, media, currentMedia, show,
+    setInteractive(value) {
+      stage.classList.toggle('read-only', !value);
+      media.forEach(el => { el.tabIndex = value ? 0 : -1; });
+    },
+    playback() {
+      return currentMedia().map(el => {
+        const layer = Number(el.dataset.layer), data = deck.slides[index].layers[layer];
+        return { layer, box: data.box, label: data.label, time: el.currentTime, duration: Number.isFinite(el.duration) ? el.duration : 0, paused: el.paused, muted: el.muted, volume: el.volume, rate: el.playbackRate };
+      });
+    },
+    apply(state, delay = 0) {
+      show(state.index);
+      for (const el of currentMedia()) {
+        const playback = state.media?.find(item => item.layer === Number(el.dataset.layer));
+        el.muted = true; // Audience devices must not echo the display's audio.
+        if (!playback || state.blackout) { el.pause(); continue; }
+        const target = Math.max(0, playback.time + (playback.paused ? 0 : delay * (playback.rate || 1)));
+        if (Number.isFinite(el.duration) && Math.abs(el.currentTime - target) > (playback.paused ? 0.06 : 0.4)) el.currentTime = Math.min(el.duration, target);
+        el.playbackRate = playback.rate || 1;
+        if (playback.paused) el.pause();
+        else if (el.paused) el.play().catch(() => {});
+      }
+    },
+    preview(blackout = false) {
+      const ctx = canvas.getContext('2d'); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (!blackout) for (const el of panes[index].children) {
+        const b = deck.slides[index].layers[Number(el.dataset.layer)].box;
+        const source = el.tagName === 'VIDEO' ? (el.readyState >= 2 && el.currentTime > 0 ? el : el._poster) : el;
+        try { ctx.drawImage(source, b[0] * canvas.width, b[1] * canvas.height, b[2] * canvas.width, b[3] * canvas.height); } catch { /* Asset is still loading. */ }
+      }
+      let frame = canvas.toDataURL('image/jpeg', 0.5);
+      if (frame.length > 50000) frame = canvas.toDataURL('image/jpeg', 0.25);
+      return frame.length < 55000 ? frame : '';
+    },
+    dispose() { resize.disconnect(); media.forEach(el => el.pause()); stage.replaceChildren(); }
+  };
+}

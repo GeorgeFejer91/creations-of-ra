@@ -1,117 +1,238 @@
-import {fitAll,setFitText} from '/assets/js/fit.js';
-import {importPowerPoint,loadPublishedDeck} from './deck.js';
-import {connect,newInvite,inviteURL,drawQR} from './transport.js';
-const $=id=>document.getElementById(id);
-const stage=$('stage'),player=$('player');
-player.append($('pair-dialog'),$('approve-dialog')); // Dialogs remain reachable in fullscreen.
-let deck=null,index=0,panes=[],media=[],channel=null,invite=null,pending=null,approved=null,lastSequence=0,lastSeen=0,lastFrame='',sequence=0;
-const message=text=>setFitText($('status'),text);
-const currentMedia=()=>media.filter(v=>Number(v.dataset.slide)===index);
-const activeMedia=()=>currentMedia()[0];
-function position(el,box){['left','top','width','height'].forEach((key,i)=>el.style[key]=`${box[i]*100}%`);}
-function installDeck(value){
- media.forEach(v=>v.pause());deck?.dispose?.();deck=value;index=0;media=[];panes=[];stage.replaceChildren();
- stage.style.aspectRatio=String(deck.width/deck.height);$('slide-select').replaceChildren();
- deck.slides.forEach((slide,n)=>{
-  const pane=document.createElement('section');pane.className='slide';pane.setAttribute('aria-label',`Slide ${n+1}: ${slide.title}`);pane.hidden=n!==0;
-  slide.layers.forEach((layer,j)=>{
-   const el=document.createElement(layer.kind==='image'?'img':layer.kind==='audio'?'audio':'video');el.className='layer';position(el,layer.box);el.src=layer.src;
-   if(layer.kind==='image'){el.alt=slide.title;el.draggable=false;el.addEventListener('load',()=>{if(index===n)sendState();});}
-   else{
-    el.classList.add('media-layer');el.poster=layer.poster;el.preload='metadata';el._posterImage=new Image();el._posterImage.src=layer.poster;el.playsInline=true;el.volume=layer.volume??.8;el.dataset.slide=String(n);el.dataset.layer=String(j);el.tabIndex=0;el.setAttribute('aria-label',`Play or pause ${layer.label}`);el.dataset.label=layer.label;
-    el.addEventListener('click',()=>toggleMedia(el).catch(()=>{}));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();toggleMedia(el).catch(()=>{});}});
-    ['play','pause','ended','loadedmetadata','volumechange'].forEach(evt=>el.addEventListener(evt,()=>{refreshControls();sendState();}));
-    el.addEventListener('error',()=>message(`This browser could not play ${layer.label}.`));
-    el.addEventListener('timeupdate',()=>{if(!el.paused)refreshControls();});media.push(el);
-   }
-   pane.append(el);
-  });panes.push(pane);stage.append(pane);
-  const option=document.createElement('option');option.value=String(n);option.textContent=`${n+1}. ${slide.title}`;$('slide-select').append(option);
- });
- $('loading').hidden=true;$('pair').disabled=false;refreshControls();message(`${deck.slides.length} slides loaded. Use the arrows, or pair a presenter phone.`);sendState();
+import { fitAll, setFitText } from '/assets/js/fit.js';
+import { importPowerPoint, loadPublishedDeck } from './deck.js?v=viewer3';
+import { createView } from './view.js?v=viewer3';
+import { connect, browserInvite, readInvite, rememberInvite, inviteURL, displayURL, drawQR, randomId } from './transport.js?v=viewer3';
+const $ = id => document.getElementById(id);
+const player = $('player'), epoch = randomId(), peers = new Map();
+let invite = readInvite() || browserInvite(), channel = null, deck = null, view = null;
+let controller = null, pending = null, version = 0, blackout = false, releaseLock, starting;
+let commandQueue = Promise.resolve(), snapshotTimer;
+// Dialogs stay outside the fullscreen slide. Pending requests wait until fullscreen ends.
+const isFullscreen = () => Boolean(document.fullscreenElement || player.classList.contains('cinema'));
+function showPendingRequest() {
+  if (pending && !isFullscreen() && !$('approve-dialog').open) {
+    $('approve-dialog').showModal();
+    setFitText($('presenter-name'), pending.name); fitAll($('approve-dialog'));
+  }
 }
-function refreshControls(){
- const count=deck?.slides.length||0,v=activeMedia();$('prev').disabled=!count||index===0;$('next').disabled=!count||index===count-1;$('slide-select').disabled=!count;$('slide-select').value=String(index);$('counter').textContent=`${count?index+1:0} / ${count}`;if(deck)setFitText($('deck-title'),deck.slides[index].title);
- $('play').disabled=!v;$('mute').disabled=!v;$('seek').disabled=!v||!Number.isFinite(v.duration);$('blackout').disabled=!count;
- $('play').textContent=v&&!v.paused?'Pause':'Play media';$('mute').textContent=v&&v.muted?'Sound off':'Sound on';$('seek').value=String(v&&Number.isFinite(v.duration)&&v.duration>0?Math.round(v.currentTime/v.duration*1000):0);
+function refreshFullscreen() {
+  const active = isFullscreen();
+  document.body.classList.toggle('presentation-fullscreen', active);
+  document.querySelector('.player-header').inert = active;
+  document.querySelector('.player-status').inert = active;
+  $('local-controls').inert = active;
+  if (active) { $('pair-dialog').close(); $('approve-dialog').close(); }
+  else showPendingRequest();
 }
-function go(n){if(!deck)return;const next=Math.max(0,Math.min(deck.slides.length-1,n));if(next===index)return;currentMedia().forEach(v=>v.pause());panes[index].hidden=true;index=next;panes[index].hidden=false;refreshControls();sendState();}
-async function toggleMedia(v=activeMedia()){
- if(!v)return;
- if(!v.paused){v.pause();return;}
- try{await v.play();$('gesture').hidden=true;message('Media playing on this display.');}
- catch(error){$('gesture').hidden=false;message('Click Enable sound on this display once, then use the phone.');throw new Error('The display needs a local click to allow sound.');}
+document.addEventListener('fullscreenchange', refreshFullscreen);
+const message = text => setFitText($('status'), text);
+const canControlLocally = () => Boolean(view && $('show-controls').checked && !controller);
+function refresh() {
+  const local = canControlLocally(), index = view?.index || 0, count = deck?.slides.length || 0;
+  const media = view?.currentMedia()[0];
+  $('local-controls').hidden = !$('show-controls').checked || Boolean(controller);
+  $('show-controls').disabled = Boolean(controller);
+  $('local-controls').querySelectorAll('button, select, input').forEach(el => { el.disabled = !local; });
+  $('prev').disabled = !local || index === 0; $('next').disabled = !local || index === count - 1;
+  $('play').disabled = !local || !media; $('mute').disabled = !local || !media;
+  $('seek').disabled = !local || !media || !Number.isFinite(media.duration);
+  $('play').textContent = media && !media.paused ? 'Pause media' : 'Play media';
+  $('mute').textContent = media?.muted ? 'Sound off' : 'Sound on';
+  $('blackout').textContent = blackout ? 'Show slide' : 'Black screen';
+  $('counter').textContent = `${count ? index + 1 : 0} / ${count}`;
+  $('slide-select').value = String(index);
+  $('seek').value = String(media && media.duration > 0 ? Math.round(media.currentTime / media.duration * 1000) : 0);
+  $('revoke').hidden = !controller;
+  $('fullscreen').disabled = !view;
+  $('ppt-file').disabled = Boolean(controller);
+  $('control-note').textContent = controller ? `${controller.name} controls this presentation. Local controls are locked.` : 'Viewing by default. Tick Show controls to present from this display.';
+  player.classList.toggle('phone-controlled', Boolean(controller));
+  view?.setInteractive(local);
+  if (deck) setFitText($('deck-title'), deck.slides[index].title);
 }
-async function fullscreen(local=false){
- if(document.fullscreenElement){await document.exitFullscreen();return;}
- if(local){try{await player.requestFullscreen();$('gesture').hidden=true;return;}catch{}}
- player.classList.toggle('cinema');$('gesture').hidden=false;message('Cinema view changed. Native fullscreen needs a click on this display.');
+function installDeck(value) {
+  view?.dispose(); deck?.dispose?.(); deck = value;
+  blackout = false; $('blank-screen').hidden = true;
+  view = createView($('stage'), deck, layer => execute({ action: 'media', layer }, 'local'), () => { refresh(); scheduleSnapshot(); });
+  $('slide-select').replaceChildren(...deck.slides.map((slide, i) => {
+    const option = document.createElement('option'); option.value = String(i); option.textContent = `${i + 1}. ${slide.title}`; return option;
+  }));
+  $('loading').hidden = true; refresh(); broadcast();
+  message(`${deck.slides.length} slides ready. Scan the QR to join as a viewer.`);
 }
-async function command(cmd){
- switch(cmd.action){case'prev':go(index-1);break;case'next':go(index+1);break;case'first':go(0);break;case'last':go((deck?.slides.length||1)-1);break;
- case'play':await toggleMedia();break;
- case'media':{const v=currentMedia().find(x=>Number(x.dataset.layer)===cmd.layer);if(v)await toggleMedia(v);break;}
- case'mute':{const v=activeMedia();if(v)v.muted=!v.muted;break;}
- case'seek':{const v=activeMedia();if(v&&Number.isFinite(cmd.value)&&Number.isFinite(v.duration))v.currentTime=Math.max(0,Math.min(1,cmd.value))*v.duration;break;}
- case'blackout':$('blank-screen').hidden=!$('blank-screen').hidden;$('blackout').textContent=$('blank-screen').hidden?'Black screen':'Show slide';break;
- case'fullscreen':await fullscreen(false);break;default:return;
- }refreshControls();sendState();
+function scheduleSnapshot() {
+  if (!snapshotTimer) snapshotTimer = setTimeout(() => { snapshotTimer = null; broadcast(); }, 40);
 }
-function preview(){
- if(!deck)return '';
- const canvas=document.createElement('canvas');canvas.width=480;canvas.height=Math.round(480*deck.height/deck.width);const ctx=canvas.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
- if($('blank-screen').hidden){for(const el of panes[index].children){try{
-  const layer=deck.slides[index].layers[Number(el.dataset.layer??Array.from(panes[index].children).indexOf(el))],b=layer.box;
-  if(el.tagName==='IMG'&&el.complete)ctx.drawImage(el,...[b[0]*canvas.width,b[1]*canvas.height,b[2]*canvas.width,b[3]*canvas.height]);
-  else if(el.tagName==='VIDEO'){const source=el.readyState>=2&&el.currentTime>0?el:el._posterImage;if(source&&(!(source instanceof HTMLImageElement)||source.complete))ctx.drawImage(source,b[0]*canvas.width,b[1]*canvas.height,b[2]*canvas.width,b[3]*canvas.height);}
- }catch{}}}
- let data=canvas.toDataURL('image/jpeg',.48);if(data.length>46000)data=canvas.toDataURL('image/jpeg',.25);return data.length<50000?data:'';
+function send(data, uuid) { try { channel?.send({ ...data, epoch }, uuid); } catch { /* A closed peer is removed on its heartbeat. */ } }
+function broadcast(target) {
+  if (!channel || !view) return;
+  let preview = ''; try { preview = view.preview(blackout); } catch { /* Non-same-origin media must not taint rendering. */ }
+  const state = { type: 'state', version: ++version, sentAt: Date.now(), index: view.index, count: deck.slides.length,
+    title: deck.slides[view.index].title, blackout, media: view.playback(), source: deck.source || 'local',
+    sourceSha256: deck.sourceSha256 || null, controller: controller ? { uuid: controller.uuid, name: controller.name } : null };
+  for (const [uuid, peer] of peers) {
+    if (target && target !== uuid) continue;
+    const packet = { ...state };
+    if (preview && (preview !== peer.lastFrame || target)) { packet.preview = preview; peer.lastFrame = preview; }
+    send(packet, uuid);
+  }
 }
-function sendState(){
- if(!channel||!approved||!deck)return;
- const v=activeMedia();let image='';try{image=preview();}catch{}
- const state={type:'state',version:++sequence,index,count:deck.slides.length,title:deck.slides[index].title,blackout:!$('blank-screen').hidden,fullscreen:!!document.fullscreenElement,media:currentMedia().map(m=>({layer:Number(m.dataset.layer),box:deck.slides[index].layers[Number(m.dataset.layer)].box,playing:!m.paused,label:m.dataset.label})),playing:!!v&&!v.paused,muted:!!v?.muted,position:v&&Number.isFinite(v.duration)&&v.duration? v.currentTime/v.duration:0};
- if(image&&image!==lastFrame){state.preview=image;lastFrame=image;}
- channel.send(state,approved.uuid);
+function welcome(uuid) {
+  send({ type: 'welcome', viewer: uuid, controller: controller ? { uuid: controller.uuid, name: controller.name } : null,
+    grant: controller?.uuid === uuid ? controller.grant : null }, uuid);
+  broadcast(uuid);
 }
-function revoke(text='Presenter disconnected.'){
- if(approved)channel?.send({type:'revoked'},approved.uuid);approved=null;pending=null;lastSequence=0;lastFrame='';$('revoke').hidden=true;$('approve-dialog').close();message(text);
+function revoke(reason = 'Presenter released. Everyone remains a viewer.') {
+  const previous = controller; controller = null;
+  if (previous) send({ type: 'revoked', reason }, previous.uuid);
+  $('show-controls').checked = false; refresh(); broadcast(); message(reason);
 }
-async function endSession(){revoke();const old=channel;channel=null;invite=null;await old?.close().catch(()=>{});$('pair-dialog').close();$('pair').disabled=!deck;}
-function receive(data,uuid){
- if(data.type==='hello'){
-  const name=typeof data.name==='string'?data.name.trim().slice(0,40):'';if(!name)return;
-  if(approved?.uuid===uuid){lastSeen=Date.now();channel?.send({type:'approved'},uuid);sendState();return;}
-  if(approved||pending&&pending.uuid!==uuid){channel?.send({type:'denied',reason:'Another presenter is connected or awaiting approval.'},uuid);return;}
-  pending={uuid,name};setFitText($('presenter-name'),name);$('pair-dialog').close();if(!$('approve-dialog').open)$('approve-dialog').showModal();fitAll($('approve-dialog'));return;
- }
- if(uuid!==approved?.uuid)return;
- lastSeen=Date.now();
- if(data.type==='ping'){channel?.send({type:'pong'},uuid);return;}
- if(data.type==='leave'){revoke();return;}
- if(data.type!=='command'||!Number.isSafeInteger(data.seq)||data.seq<=lastSequence)return;
- lastSequence=data.seq;command(data).catch(error=>channel?.send({type:'notice',text:error.message},uuid));
+function removePeer(uuid) {
+  peers.delete(uuid);
+  if (pending?.uuid === uuid) { pending = null; $('approve-dialog').close(); }
+  if (controller?.uuid === uuid) revoke('Presenter disconnected. Local controls remain off until selected.');
 }
-$('pair').disabled=true;
-$('pair').addEventListener('click',async()=>{
- $('pair').disabled=true;
- try{await endSession();$('pair').disabled=true;invite=newInvite();const url=inviteURL(invite);$('invite-link').value=url;$('pair-dialog').showModal();message('Connecting the presenter session…');await drawQR($('qr'),url);channel=await connect(invite,'host',receive,(state,uuid)=>{if(state==='closed'&&(!uuid||uuid===approved?.uuid))revoke('Presenter connection lost. Pair again.');});message('Scan the QR code with your phone. Approval is required on this display.');}
- catch(error){message(error.message);$('pair-dialog').close();}finally{$('pair').disabled=!deck;}
+async function startSession() {
+  if (channel) return channel;
+  if (starting) return starting;
+  starting = connect(invite, 'host', receive, (state, uuid) => {
+    if (state === 'open' && uuid) { if (!peers.has(uuid)) peers.set(uuid, { lastSeen: Date.now(), lastFrame: '', seq: 0 }); setTimeout(() => welcome(uuid), 0); }
+    if (state === 'closed' && uuid) removePeer(uuid);
+    if (state === 'closed' && !uuid) {
+      channel = null; peers.clear(); pending = null; $('approve-dialog').close(); revoke('Session disconnected. Use Connect phone to retry.');
+    }
+  }).then(value => { channel = value; for (const uuid of peers.keys()) welcome(uuid); return value; }).finally(() => { starting = null; });
+  return starting;
+}
+function receive(data, uuid) {
+  if (data.type === 'hello') {
+    if (!peers.has(uuid)) peers.set(uuid, { lastSeen: Date.now(), lastFrame: '', seq: 0 });
+    peers.get(uuid).lastSeen = Date.now(); welcome(uuid); return;
+  }
+  const peer = peers.get(uuid); if (!peer) return; peer.lastSeen = Date.now();
+  if (data.type === 'ping') { send({ type: 'pong', clientTime: data.clientTime, hostTime: Date.now() }, uuid); return; }
+  if (data.type === 'leave') { removePeer(uuid); return; }
+  if (data.type === 'release-control') {
+    if (controller?.uuid === uuid) revoke();
+    if (pending?.uuid === uuid) { pending = null; $('approve-dialog').close(); }
+    return;
+  }
+  if (data.type === 'request-control') {
+    const name = typeof data.name === 'string' ? data.name.trim().slice(0, 40) : '';
+    if (!name || !view) { send({ type: 'denied', reason: 'The display is not ready yet.' }, uuid); return; }
+    if (controller?.uuid === uuid) { welcome(uuid); return; }
+    if (controller || pending && pending.uuid !== uuid) { send({ type: 'denied', reason: 'Another presenter is active or awaiting approval.' }, uuid); return; }
+    pending = { uuid, name }; $('pair-dialog').close();
+    showPendingRequest();
+    if (isFullscreen()) send({ type: 'notice', text: 'Ask the display owner to exit fullscreen to approve control. You can keep watching.' }, uuid);
+    return;
+  }
+  if (data.type !== 'command' || uuid !== controller?.uuid || data.grant !== controller.grant || !Number.isSafeInteger(data.seq) || data.seq <= peer.seq) return;
+  peer.seq = data.seq;
+  execute(data, uuid);
+}
+function execute(data, sender) {
+  const grant = controller?.grant;
+  commandQueue = commandQueue.then(async () => {
+    // Recheck after asynchronous media work: a revoked controller cannot drain a stale queue.
+    if (sender === 'local' ? !canControlLocally() : (sender !== controller?.uuid || grant !== controller?.grant)) return;
+    const media = view?.currentMedia()[0];
+    switch (data.action) {
+      case 'prev': view.show(Math.max(0, view.index - 1)); break;
+      case 'next': view.show(Math.min(deck.slides.length - 1, view.index + 1)); break;
+      case 'first': view.show(0); break;
+      case 'last': view.show(deck.slides.length - 1); break;
+      case 'slide': if (Number.isInteger(data.index)) view.show(data.index); break;
+      case 'play': await toggleMedia(media); break;
+      case 'media': await toggleMedia(view.currentMedia().find(el => Number(el.dataset.layer) === data.layer)); break;
+      case 'seek': if (media && Number.isFinite(media.duration) && Number.isFinite(data.value)) media.currentTime = Math.max(0, Math.min(1, data.value)) * media.duration; break;
+      case 'mute': if (media) media.muted = !media.muted; break;
+      case 'blackout': blackout = !blackout; $('blank-screen').hidden = !blackout; break;
+      case 'fullscreen':
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else player.classList.toggle('cinema');
+        refreshFullscreen(); break;
+      default: return;
+    }
+    refresh(); broadcast();
+  }).catch(error => { message(error.message); if (sender !== 'local') send({ type: 'notice', text: error.message }, sender); });
+}
+async function toggleMedia(media) {
+  if (!media) return;
+  if (!media.paused) { media.pause(); return; }
+  try { await media.play(); $('gesture').hidden = true; }
+  catch { $('gesture').hidden = false; throw new Error('Sound needs a click on the display. Exit fullscreen and use Enable sound, then retry.'); }
+}
+async function fullscreen() {
+  if (!view) return;
+  if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+  if (player.classList.contains('cinema')) { player.classList.remove('cinema'); refreshFullscreen(); return; }
+  try { await player.requestFullscreen(); } catch { player.classList.add('cinema'); }
+  refreshFullscreen();
+}
+$('show-controls').addEventListener('change', refresh);
+$('prev').onclick = () => execute({ action: 'prev' }, 'local');
+$('next').onclick = () => execute({ action: 'next' }, 'local');
+$('slide-select').onchange = e => execute({ action: 'slide', index: Number(e.target.value) }, 'local');
+for (const action of ['play', 'mute', 'blackout']) $(action).onclick = () => execute({ action }, 'local');
+$('seek').onchange = e => execute({ action: 'seek', value: Number(e.target.value) / 1000 }, 'local');
+$('fullscreen').onclick = fullscreen;
+$('gesture').onclick = () => toggleMedia(view?.currentMedia()[0]).catch(error => message(error.message));
+$('pair').onclick = async () => {
+  $('pair').disabled = true;
+  try { await startSession(); $('invite-link').value = inviteURL(invite); $('pair-dialog').showModal(); await drawQR($('qr'), inviteURL(invite)); }
+  catch (error) { message(error.message); }
+  finally { $('pair').disabled = false; }
+};
+$('copy-link').onclick = async () => { try { await navigator.clipboard.writeText($('invite-link').value); $('copy-link').textContent = 'Copied'; } catch { $('invite-link').select(); } };
+$('revoke').onclick = () => revoke();
+$('approve').onclick = () => {
+  if (!pending || !peers.has(pending.uuid)) return;
+  controller = { ...pending, grant: randomId() }; pending = null; peers.get(controller.uuid).seq = 0;
+  $('show-controls').checked = false; $('approve-dialog').close();
+  send({ type: 'approved', grant: controller.grant }, controller.uuid); refresh(); broadcast();
+  message(`${controller.name} is presenting. All viewers follow this display.`);
+};
+function deny() { if (pending) send({ type: 'denied', reason: 'The display declined control. You can still watch.' }, pending.uuid); pending = null; $('approve-dialog').close(); }
+$('deny').onclick = deny; $('approve-dialog').addEventListener('cancel', deny);
+$('ppt-file').onchange = async event => {
+  const file = event.target.files[0]; if (!file) return;
+  if (controller) { message('Release phone control before replacing the presentation.'); return; }
+  try { const value = await importPowerPoint(await file.arrayBuffer()); value.source = 'local'; installDeck(value); }
+  catch (error) { setFitText($('load-message'), error.message); }
+};
+window.addEventListener('keydown', event => {
+  if (event.key === 'Escape') { player.classList.remove('cinema'); refreshFullscreen(); }
+  if ($('pair-dialog').open || $('approve-dialog').open || /INPUT|SELECT|TEXTAREA|BUTTON|A/.test(event.target.tagName)) return;
+  if (event.key.toLowerCase() === 'f') { fullscreen(); return; }
+  if (!canControlLocally()) return;
+  const actions = { ArrowRight: 'next', PageDown: 'next', ArrowLeft: 'prev', PageUp: 'prev', Home: 'first', End: 'last', b: 'blackout', ' ': view.currentMedia().length ? 'play' : 'next' };
+  if (actions[event.key]) { event.preventDefault(); execute({ action: actions[event.key] }, 'local'); }
 });
-$('approve').addEventListener('click',()=>{if(!pending||!channel)return;approved=pending;pending=null;lastSeen=Date.now();lastSequence=0;lastFrame='';$('approve-dialog').close();$('revoke').hidden=false;channel.send({type:'approved'},approved.uuid);message(`${approved.name} is presenting.`);sendState();});
-$('deny').addEventListener('click',()=>{if(pending)channel?.send({type:'denied',reason:'The display declined the request.'},pending.uuid);pending=null;$('approve-dialog').close();});
-$('approve-dialog').addEventListener('cancel',()=>{if(pending)channel?.send({type:'denied',reason:'Request dismissed.'},pending.uuid);pending=null;});
-$('end-session').addEventListener('click',()=>endSession());$('revoke').addEventListener('click',()=>endSession());
-$('copy-link').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('invite-link').value);$('copy-link').textContent='Copied';setTimeout(()=>$('copy-link').textContent='Copy link',2000);}catch{$('invite-link').select();}});
-$('prev').addEventListener('click',()=>go(index-1));$('next').addEventListener('click',()=>go(index+1));$('slide-select').addEventListener('change',e=>go(Number(e.target.value)));
-$('play').addEventListener('click',()=>toggleMedia().catch(()=>{}));$('mute').addEventListener('click',()=>command({action:'mute'}));$('blackout').addEventListener('click',()=>command({action:'blackout'}));$('seek').addEventListener('input',e=>command({action:'seek',value:Number(e.target.value)/1000}));
-$('fullscreen').addEventListener('click',()=>fullscreen(true));$('gesture').addEventListener('click',()=>{const v=activeMedia();if(v&&v.paused)toggleMedia(v).catch(()=>{});fullscreen(true);});
-$('ppt-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;setFitText($('load-message'),'Converting images and videos to browser elements…');try{installDeck(await importPowerPoint(await file.arrayBuffer()));}catch(error){$('loading').hidden=false;setFitText($('load-message'),error.message);message(error.message);}});
-window.addEventListener('keydown',event=>{
- if($('pair-dialog').open||$('approve-dialog').open||/INPUT|SELECT|TEXTAREA|BUTTON/.test(event.target.tagName))return;
- const key=event.key;if(['ArrowRight','PageDown','ArrowLeft','PageUp','Home','End',' '].includes(key))event.preventDefault();
- if(key==='ArrowRight'||key==='PageDown')go(index+1);if(key==='ArrowLeft'||key==='PageUp')go(index-1);if(key==='Home')go(0);if(key==='End')go((deck?.slides.length||1)-1);if(key===' ')activeMedia()?toggleMedia().catch(()=>{}):go(index+1);if(key.toLowerCase()==='b')command({action:'blackout'});if(key.toLowerCase()==='f')fullscreen(true);if(key==='Escape')player.classList.remove('cinema');
-});
-setInterval(()=>{if(approved&&Date.now()-lastSeen>15000)revoke('Presenter went offline. Reopen the link and approve again.');else if(approved)sendState();},1000);
-window.addEventListener('pagehide',()=>{media.forEach(v=>v.pause());channel?.close();});
-loadPublishedDeck().then(installDeck).catch(error=>{setFitText($('load-message'),error.message);message('Presentation player ready. Open the supplied PowerPoint to begin.');});
+setInterval(() => { for (const [uuid, peer] of peers) if (Date.now() - peer.lastSeen > 15000) removePeer(uuid); }, 3000);
+setInterval(() => { if (peers.size && view?.currentMedia().some(el => !el.paused)) broadcast(); }, 300);
+setInterval(() => { if (peers.size) broadcast(); }, 1500);
+window.addEventListener('pagehide', () => { for (const uuid of peers.keys()) send({ type: 'ended' }, uuid); channel?.close(); view?.dispose(); releaseLock?.(); });
+async function boot() {
+  // A copied viewer link cannot start a second state owner. Duplicate display tabs join as viewers.
+  const ownerKey = 'ra:display-owner:' + invite.session;
+  let tabOwnsSession = false;
+  try { tabOwnsSession = sessionStorage.getItem(ownerKey) === '1'; } catch { /* Private storage may be disabled. */ }
+  if (location.hash && (!new URLSearchParams(location.hash.slice(1)).has('host') || !tabOwnsSession)) {
+    location.replace(inviteURL(invite)); return;
+  }
+  try { sessionStorage.setItem(ownerKey, '1'); } catch { /* The same-browser display lock still applies. */ }
+  if (navigator.locks) {
+    const owns = await new Promise(resolve => {
+      navigator.locks.request('ra-display-' + invite.session, { ifAvailable: true }, async lock => {
+        resolve(Boolean(lock)); if (lock) await new Promise(release => { releaseLock = release; });
+      });
+    });
+    if (!owns) { location.replace(inviteURL(invite)); return; }
+  }
+  rememberInvite(invite); history.replaceState(null, '', displayURL(invite));
+  refresh(); startSession().catch(error => message(error.message));
+  try { installDeck(await loadPublishedDeck()); }
+  catch (error) { setFitText($('load-message'), error.message); message('Preload unavailable. Open the supplied PowerPoint on this display.'); }
+}
+boot().catch(error => message(error.message));
