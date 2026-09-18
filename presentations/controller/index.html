@@ -1,37 +1,24 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-  <meta name="referrer" content="no-referrer"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#000000">
-  <title>Watch the presentation — Creations of Ra</title><link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/presentations/player.css?v=viewer3">
-  <script type="module" src="/presentations/controller.js?v=viewer3"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="dark"><meta name="theme-color" content="#000">
+  <title>Presenter — Ra.</title><link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css?v=min6"><link rel="stylesheet" href="/presentations/player.css?v=min6">
+  <script type="module" src="/presentations/controller.js?v=min6"></script>
 </head>
-<body class="remote-body">
-<main class="remote-shell">
-  <header class="remote-header"><a href="/" class="wordmark" aria-label="Creations of Ra">ra.</a><span id="role">Viewer</span><button id="viewer-fullscreen" type="button">Fullscreen</button></header>
-  <p id="remote-status" role="status" data-fit data-fit-min="12" data-fit-max="14"><span>Joining as a viewer…</span></p>
-  <section id="remote-panel" aria-label="Synchronized presentation">
-    <div id="preview" class="remote-preview">
-      <div class="waiting-slide">Waiting for the display</div>
-      <img id="preview-image" alt="Current slide from the presentation display">
-      <div id="viewer-stage" class="stage" hidden></div>
-      <div id="viewer-blackout" class="blank-screen" hidden></div>
-      <div id="hotspots" hidden></div>
-    </div>
-    <div class="viewer-summary"><p id="remote-title" class="remote-title" data-fit data-fit-min="13" data-fit-max="20" data-fit-single><span>Beyond the Line</span></p><span id="remote-counter">— / —</span></div>
-    <label class="controls-toggle"><input id="show-controls" type="checkbox"> Show controls</label>
-    <div id="control-panel" hidden>
-      <form id="join-form"><label for="name">Presenter name</label><div class="request-row"><input id="name" name="name" maxlength="40" autocomplete="given-name" required placeholder="Your name"><button id="join" type="submit" disabled>Request control</button></div></form>
-      <p id="request-note" class="small">Watching needs no approval. Control needs approval from the display.</p>
-      <div class="remote-navigation"><button data-command="prev" disabled>← Back</button><button data-command="next" disabled>Next →</button></div>
-      <div class="remote-controls"><button data-command="first" disabled>First slide</button><button data-command="last" disabled>Last slide</button><button data-command="play" id="remote-play" disabled>Play media</button><button data-command="mute" disabled>Sound on / off</button><button data-command="blackout" disabled>Black screen</button><button data-command="fullscreen" disabled>Display fullscreen</button></div>
-      <label class="remote-seek" for="remote-seek">Media position<input id="remote-seek" type="range" min="0" max="1000" value="0" disabled></label>
-      <button id="leave" type="button" hidden>Release control and keep watching</button>
-    </div>
+<body class="controller-page">
+<main class="controller-shell">
+  <header class="controller-header"><a href="/" class="wordmark">Ra.</a><span id="controller-status">Connecting…</span></header>
+  <section id="controller-panel" hidden>
+    <div id="controller-stage" class="controller-stage"></div>
+    <div class="controller-meta"><span id="controller-title">Beyond the Line</span><span id="controller-count">1 / 16</span></div>
+    <div class="controller-nav"><button data-action="prev">← Back</button><button data-action="next">Next →</button></div>
+    <div class="controller-media"><button data-action="play" id="controller-play">Play / pause</button><button data-action="blackout">Black screen</button></div>
+    <label class="controller-seek">Media position<input id="controller-seek" type="range" min="0" max="1000" value="0"></label>
+    <button id="finish-presentation" class="finish-button">Finish presentation</button>
   </section>
-  <div class="join-footer"><span class="small">This view follows the display. Audience audio is muted. <a href="/presentations/">Presentation preview and viewer QR</a>.</span><button id="retry" type="button">Reconnect</button></div>
 </main>
-<noscript><p>Watching a synchronized presentation requires JavaScript.</p></noscript>
 </body>
 </html>
