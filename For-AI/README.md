@@ -27,6 +27,15 @@ Beyond the Line is the supplied 16-slide Manchester Museum Partition Project pre
 | [Pretext](https://github.com/chenglou/pretext) | Runtime text fitted to fixed geometry. This is a library, not an invented skill file. Read its actual README/API and use the pinned package. |
 | [VDO.Ninja SDK](https://github.com/steveseguin/ninjasdk) | Phone pairing / WebRTC data channels only. Read its API before modifying the transport. |
 
+## VDO.Ninja transport boundary — mandatory
+
+VDO.Ninja is **strictly a behaviour/control synchronization layer by default**. Use its data channel to synchronize website state and user actions between devices, for example slide index, next/previous, play/pause, seek position, blackout, finish, heartbeat and other compact control/state values.
+
+**Do not use VDO.Ninja to transmit presentation images, screenshots, canvas frames, video frames, audio, microphone input, camera input or other visual/media payloads unless the user explicitly asks to transmit audio or visual information.** Do not invoke VDO.Ninja audio/video/camera/streaming features merely because they could solve a synchronization problem. The normal architecture is: each browser loads/renders the original website assets or published PowerPoint locally, while VDO.Ninja sends only the commands/state that make those local browser instances behave identically.
+
+If a future task can be solved by synchronizing website behaviour, controls or timestamps, that is the required solution. Media transport is opt-in only when the user explicitly requests actual audio/video/image transmission.
+
+
 Install/load relevant skills using the agent's existing mechanism, or read their actual instructions. Do not create a skill manager or add irrelevant Rust/Tauri dependencies to this static website.
 
 ## Small architecture
@@ -37,7 +46,7 @@ Install/load relevant skills using the agent's existing mechanism, or read their
 - `presentations/controller/`: hidden/noindex smartphone controller reached only through the QR.
 - `presentations/beyond-the-line/`: compatibility redirect to `/presentations/`, not a separate product screen.
 - `presentations/deck.js`, `view.js`: every browser independently downloads and renders the canonical published PPTX at original embedded-media quality.
-- `presentations/transport.js`: one fixed VDO.Ninja **data-only** publisher stream. It carries only presentation control/state (slide index, media time/play-pause, blackout, finish/heartbeat); never slide images, video frames, screenshots or presentation media. The phone is the publisher/controller; every presentations page is a viewer. No camera/microphone.
+- `presentations/transport.js`: one fixed VDO.Ninja **data-only** publisher stream. It carries only presentation control/state (slide index, media time/play-pause, blackout, finish/heartbeat); never slide images, video frames, screenshots, audio or presentation media. The phone is the publisher/controller; every presentations page is a viewer. Camera/microphone/media transport are forbidden unless the user explicitly requests actual audio/visual transmission.
 - No CMS, database, login service, analytics, viewer mode selector, approval dialog or general presentation framework.
 
 Runtime dependencies are pinned: Pretext 0.0.9 (MIT), fflate 0.8.2 (MIT), qrcode-generator 1.4.4 (MIT), VDO.Ninja SDK 1.5.5 (MPL-2.0). Served by jsDelivr; source links and third-party limitations are in SOURCES.md. Pin upgrades deliberately. No third-party fonts. QR is generated locally, never by an external QR-image service.
