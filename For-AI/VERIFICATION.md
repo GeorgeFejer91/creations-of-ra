@@ -1,5 +1,16 @@
 # Verification / definition of done
 
+## Viewer-first update — 2026-09-18
+
+V.2 writes were applied to the actual CreationsOfRa workspace. Browser checks used SHA-matched copies of player.js, controller.js, view.js, their HTML and CSS. In-memory browser documents with test transport/measurement and locally supplied original media passed: viewer default; opt-in controls; fullscreen without application chrome; deferred approval; exclusive phone control; local/unapproved/replayed command refusal; synchronized embedded MP4 play/pause; blackout; and release back to viewing. No page JavaScript errors were observed. Screenshot: fullscreen-viewer-only.png in the authoring verification output.
+
+These are application-behavior checks, NOT live VDO.Ninja signaling, physical QR scans, physical iOS/Android tests, or real Pretext-CDN integration. Network browser navigation in the authoring container returned `net::ERR_BLOCKED_BY_ADMINISTRATOR`, so those tests could not run here. Cross-device copied-link ownership should also be exercised in a network-enabled browser.
+
+Canonical preload upload was attempted through V.2 and failed exactly with:
+`{"error":{"code":"file_too_large","message":"'assets/Beyond_the_Line_Rabia_Saleemi.pptx' exceeds the configured per-file limit.","path":"direct"}}`
+
+The code automatically requests that path; public media preload remains incomplete until an authorized upload succeeds. Do not mark the full presentation product PASS solely because Pages deploys the text files.
+
 Run checks against the actual deployed URL as well as local code. Record observed results; do not relabel a mock test as a physical-phone test.
 
 ## Styling
@@ -12,7 +23,7 @@ Original supplied file yields 16 slides and exactly three HTML video elements on
 
 ## Presenter handshake
 
-Use two independent browser contexts (then two real devices before claiming physical-phone acceptance). Display creates fresh QR/link. Phone submits a name. Before approval, commands cannot move slides. Display denial does not continuously reopen the request. Approval enables Back/Next and media controls; the miniature shows the actual current slide. Unapproved peer UUID, old session and repeated sequence are ignored. Revoke/leave/heartbeat loss disable commands; fresh approval required. Reopening the display invalidates the old session. No camera/microphone prompts.
+Use a display, a phone/controller, and at least one additional audience browser. Joining the QR is viewer-first, immediately synchronized and needs no name. Controls appear only when Show controls is checked; sending commands still requires display approval. Verify that approval disables display controls and all other viewers' controls. Check late joining, denied/revoked/stale/repeated commands, copied display URLs, slide navigation, media position and blackout. Fullscreen must contain only the presentation; requests received in fullscreen wait until exit. Release returns to viewing without automatically enabling local control. A restarted owner has a new command epoch and does not inherit a prior phone grant. No camera/microphone prompts.
 
 Test the three real videos and phone hotspot controls. Native fullscreen can require a local click. Audible playback can require local activation; test blocked play and the visible recovery button instead of claiming arbitrary remote activation works. Test actual iOS Safari / Android Chrome before claiming those platforms verified.
 
