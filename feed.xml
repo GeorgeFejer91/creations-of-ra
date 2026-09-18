@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Creations of Ra</title>
+    <link>https://creations-of-ra.com/</link>
+    <description>An artist’s journal. Work, notes and things in progress.</description>
+    <language>en</language>
+    <atom:link href="https://creations-of-ra.com/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>A beginning</title>
+      <link>https://creations-of-ra.com/posts/a-beginning/</link>
+      <guid isPermaLink="true">https://creations-of-ra.com/posts/a-beginning/</guid>
+      <pubDate>Fri, 18 Sep 2026 10:00:00 GMT</pubDate>
+      <description>A new home for Ra’s work, notes and things in progress.</description>
+    </item>
+  </channel>
+</rss>

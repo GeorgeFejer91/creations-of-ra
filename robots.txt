@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://creations-of-ra.com/sitemap.xml
