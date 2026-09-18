@@ -64,3 +64,11 @@ Use the V.2 direct publisher for exact changed paths to `GeorgeFejer91/creations
 Canonical source: `assets/Beyond_the_Line_Rabia_Saleemi.pptx` (41,815,513 bytes). V.2 now publishes this file successfully and it is the canonical preloaded PowerPoint. The loader also retains the converted-manifest fallback. Do not duplicate presentation sources or reintroduce a manual file-picker workflow as the normal path.
 
 For local conversion: `python For-AI/scripts/import_presentation.py PATH_TO_PPTX`. Output is the exact embedded media plus a geometry manifest; no screenshots are used as a substitute for the embedded videos. Test before publishing. All future orchestration stays in this folder.
+
+## Presentation idle-page geometry
+
+The requested idle layout is two thin-bordered black panels: original first-slide preview on the left, project title/details above the QR on the right. Desktop panels share a 520px height, with a 336px right column and a 24px gap. Below 1040px they stack; the preview keeps its 16:9 aspect ratio. Do not stretch/crop the slide artwork to fill the panel.
+
+The title, project details, QR label and note use the existing `assets/js/fit.js` Pretext implementation with explicit `data-fit` bounds and fixed CSS text boxes. Fit text to geometry, not the reverse. The QR is white-on-black through an SVG-only inversion; preserve its quiet-zone margin and never invert the slide image. The QR remains a link to the same hidden phone controller, not a viewer join action. Physical phone scan compatibility must be tested before claiming universal support for the inverse colours.
+
+The first-slide image stays hidden until decoded, with bounded loading/error feedback instead of a broken-image icon. QR generation and text fitting must not delay the independent PPTX download. This layout refinement does not change media/control transport or the phone's volume/tap controls.

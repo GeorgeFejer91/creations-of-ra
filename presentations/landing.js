@@ -1,3 +1,4 @@
+import {fitAll} from '/assets/js/fit.js';
 import {loadPublishedDeck} from './deck.js?v=control8';
 import {createView} from './view.js?v=control8';
 import {connectViewer,controllerURL,drawQR} from './transport.js?v=min6';
@@ -54,14 +55,32 @@ async function connect(){
   }catch{idle();restart(1800);}
 }
 async function boot(){
-  await drawQR($('controller-qr'),controllerURL());
+  // QR/text fitting must not hold up the independent PPT download.
+  fitAll($('idle'));
+  drawQR($('controller-qr'),controllerURL()).catch(()=>{
+    $('controller-qr').textContent='Open controller';
+    status('QR unavailable. The controller link still works.');
+  });
   try{
     deck=await loadPublishedDeck();
     const first=deck.slides?.[0]?.layers?.find(layer=>layer.kind==='image');
-    if(first)$('cover').src=first.src;
+    if(!first)throw new Error('The first slide has no image.');
+    const cover=$('cover');cover.src=first.src;
+    cover.decode().then(()=>{
+      cover.hidden=false;$('cover-status').hidden=true;
+      cover.closest('figure').setAttribute('aria-busy','false');
+    }).catch(()=>{
+      cover.hidden=true;$('cover-status').textContent='Preview unavailable.';
+      cover.closest('figure').setAttribute('aria-busy','false');
+    });
     view=createView($('viewer-stage'),deck);
     view.setInteractive(false);view.show(0);
-  }catch{status('Presentation unavailable.');}
+  }catch(error){
+    $('cover-status').textContent='Presentation could not load. Reload to retry.';
+    $('cover').closest('figure').setAttribute('aria-busy','false');
+    status(error.message);
+    return;
+  }
   idle();connect();
   setInterval(()=>{
     if(channel&&controller)channel.send({type:'ping'},controller);

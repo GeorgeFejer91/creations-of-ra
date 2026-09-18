@@ -46,3 +46,11 @@ An actual attachment-to-PC binary upload action is not exposed by the current MC
 - Presenter application logic: name request, deny without repeated prompt, approve, next, black screen, miniature preview, unapproved-sender refusal and revoke passed with explicit transport/measurement test doubles.
 - This authoring container blocks browser network navigation; actual CDN/Pretext integration, VDO.Ninja signaling, physical QR scanning and physical iOS/Android devices were NOT verified here. Do not label these checks as a live phone test.
 - The 41,815,513-byte canonical PPTX is published at `/assets/Beyond_the_Line_Rabia_Saleemi.pptx` and is the normal viewer/controller source.
+
+## Framed presentation layout — panels9
+
+Applied and checked SHA-identical copies of `presentations/index.html`, `player.css` and `landing.js`. Offline Chromium checks at 320, 390, 768, 1024, 1100, 1440 and 1920px passed: no horizontal overflow; no truncated/overflowing current labels; equal panel top/bottom edges on desktop; stacked panels at narrower widths; QR SVG inversion; decoded first-slide preview; live/idle transition still hides/restores the panels. No page JavaScript errors were observed.
+
+Scope: real HTML/CSS and the existing fit.js **DOM fallback**, with a local original slide image and explicit deck/transport/QR fixtures. Browser network navigation returned ERR_BLOCKED_BY_ADMINISTRATOR. The actual Pretext CDN engine, production PPTX download, VDO.Ninja connection, and physical inverted-QR scanning were NOT verified by this check. Pretext remains the production primary fitting engine, not the test fixture. The supplied deck and active control/data-channel code were not changed.
+
+Run the focused layout check with `python For-AI/tests/verify_presentation_panels.py --cover PATH_TO_EXTRACTED_FIRST_SLIDE_PNG`. It uses Playwright and Python qrcode for isolated fixtures, not live device testing.
