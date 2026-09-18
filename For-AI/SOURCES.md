@@ -1,0 +1,22 @@
+# Source and dependency inventory
+
+## Artist content
+
+Source: user-supplied `Beyond_the_Line_Rabia_Saleemi (3) (1).pptx`.
+SHA-256: `5138ef7f833a9b241e766c9b9f3a8891aa3aca02485f1198b9285d6776d44a7b`.
+
+Slide 4 identifies Rabia Saleemi as a multidisciplinary artist, educator and facilitator, with MA Art Practice & Education; Creative Lead — Rosa Festival; Former Creative Director — Brink Art Studio CIC. Its practice statement says her practice moves between research, intuition, making and collaboration. This is the basis of the biography, not external biographical research.
+
+The archive contains 16 flattened slide backgrounds and three MP4 overlays, on slides 5, 6 and 9. There are no editable text runs. PowerPoint media timing is click-to-start (indefinite start delay), with volume 0.8. Embedded video durations: approximately 12.12s, 30.36s and 38.13s. The browser version preserves the images/media geometry and click playback, not PowerPoint's application ribbon. The raster slide text cannot be independently refitted without reconstructing the artwork; Pretext governs website and player UI text, not baked-in pixels.
+
+## Runtime libraries and documentation
+
+- Pretext / Cheng Lou: https://github.com/chenglou/pretext — `@chenglou/pretext@0.0.9`, MIT. Actual APIs: prepareWithSegments, measureLineStats, measureNaturalWidth. Do not invent a built-in auto-font-size function; the site's bounded fitting loop is application code.
+- VDO.Ninja SDK: https://github.com/steveseguin/ninjasdk — `@vdoninja/sdk@1.5.5`, MPL-2.0. Data-only announce/view with bidirectional sendData and UUID-bound receipt. SDK/service dependency is required for live cross-device pairing; no camera/microphone requested.
+- fflate: https://github.com/101arrowz/fflate — `fflate@0.8.2`, MIT. Only for local/imported PPTX ZIP extraction.
+- QR generator: https://github.com/kazuhikoarase/qrcode-generator — `qrcode-generator@1.4.4`, MIT. Local QR generation keeps session URLs away from a QR-image service.
+- Pairing inspiration requested by owner: https://ec-games.space/ and https://github.com/GeorgeFejer91/ECGaming. This is inspiration, not a claim that its code was copied or its infrastructure is owned by this site.
+- Fullscreen: https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen
+- Audible playback: https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay
+
+P2P pairing needs reachable VDO.Ninja signaling and usable WebRTC network traversal. Restricted networks, disabled WebRTC, sleeping phones and unavailable signaling must surface as failures, not a false Connected status. Do not promise the signaling service cannot observe connection metadata.
