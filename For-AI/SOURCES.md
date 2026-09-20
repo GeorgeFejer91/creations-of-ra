@@ -2,12 +2,12 @@
 
 ## Artist content
 
-Source: user-supplied `Beyond_the_Line_Rabia_Saleemi (3) (1).pptx`.
-SHA-256: `5138ef7f833a9b241e766c9b9f3a8891aa3aca02485f1198b9285d6776d44a7b`.
+Source: user-supplied `assets/Beyond_the_Line_Rabia_Saleemi.pptx`.
+SHA-256: `a4b812278c3508f33d24af29bb6d8f1fa7974f053d968b2a680a985fce37990c`.
 
 Slide 4 identifies Rabia Saleemi as a multidisciplinary artist, educator and facilitator, with MA Art Practice & Education; Creative Lead — Rosa Festival; Former Creative Director — Brink Art Studio CIC. Its practice statement says her practice moves between research, intuition, making and collaboration. This is the basis of the biography, not external biographical research.
 
-The archive contains 16 flattened slide backgrounds and three MP4 overlays, on slides 5, 6 and 9. There are no editable text runs. PowerPoint media timing is click-to-start (indefinite start delay), with volume 0.8. Embedded video durations: approximately 12.12s, 30.36s and 38.13s. The browser version preserves the images/media geometry and click playback, not PowerPoint's application ribbon. The raster slide text cannot be independently refitted without reconstructing the artwork; Pretext governs website and player UI text, not baked-in pixels.
+The archive contains 17 slides: 16 flattened slide backgrounds, one native PowerPoint budget slide at position 16 and three MP4 overlays on slides 5, 6 and 9. PowerPoint media timing is click-to-start (indefinite start delay), with volume 0.8. Embedded video durations: approximately 12.12s, 30.36s and 38.13s. The browser version preserves the images/media geometry and click playback, and uses `assets/beyond-the-line/slide-16-budget.png`, exported directly from PowerPoint, for the one native-shape slide. The raster slide text cannot be independently refitted without reconstructing the artwork; Pretext governs website and player UI text, not baked-in pixels.
 
 ## Runtime libraries and documentation
 

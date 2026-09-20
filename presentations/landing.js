@@ -1,5 +1,5 @@
 import {fitAll} from '/assets/js/fit.js';
-import {loadPublishedDeck} from './deck.js?v=control8';
+import {loadPublishedDeck} from './deck.js?v=control9';
 import {createView} from './view.js?v=control8';
 import {connectViewer,controllerURL,drawQR} from './transport.js?v=min6';
 

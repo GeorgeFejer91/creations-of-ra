@@ -6,7 +6,7 @@ This is the first file every agent must read. Then read `VERIFICATION.md`. This 
 
 A black-and-white, minimalist link hub and presentation site for **Ra / Rabia Saleemi**. Public site: https://creations-of-ra.com/. Repository: https://github.com/GeorgeFejer91/creations-of-ra. The visible homepage contains only `Ra.` plus Presentations, Instagram and Behance links. Do not add biography, journal, placeholder copy or extra navigation unless explicitly requested.
 
-Beyond the Line is the supplied 16-slide Manchester Museum Partition Project presentation. Its PowerPoint has raster slide images and three embedded H.264/AAC MP4 videos, not editable text/shapes. Preserve image layers, original artwork colours, native slide aspect ratio, coordinates, slide order and embedded media. Render actual HTML image/video elements with slideshow controls. Do not claim a general PowerPoint engine or invent animations. See SOURCES.md.
+Beyond the Line is the supplied 17-slide Manchester Museum Partition Project presentation. Its PowerPoint has 16 raster slide images, three embedded H.264/AAC MP4 videos and one native PowerPoint budget slide. Preserve image layers, original artwork colours, native slide aspect ratio, coordinates, slide order and embedded media. The browser uses a PowerPoint export for the native budget slide and renders the other original image/video elements with slideshow controls. Do not claim a general PowerPoint engine or invent animations. See SOURCES.md.
 
 ## Non-negotiable design logic: geometry first, text second
 
@@ -61,7 +61,7 @@ Required controller behavior: previous/next, tap embedded media or use Play/Paus
 
 Use the V.2 direct publisher for exact changed paths to `GeorgeFejer91/creations-of-ra`, branch main; do not retarget unrelated repositories or publish `.chatgpt/`. Verify remote SHA and the deployed site with the expected text. Keep commits coherent. Read an existing workflow before changing it.
 
-Canonical source: `assets/Beyond_the_Line_Rabia_Saleemi.pptx` (41,815,513 bytes). V.2 now publishes this file successfully and it is the canonical preloaded PowerPoint. The loader also retains the converted-manifest fallback. Do not duplicate presentation sources or reintroduce a manual file-picker workflow as the normal path.
+Canonical source: `assets/Beyond_the_Line_Rabia_Saleemi.pptx` (41,818,545 bytes). V.2 publishes this file and it is the canonical preloaded PowerPoint. The native budget slide uses `assets/beyond-the-line/slide-16-budget.png`, exported directly from that exact source file and accepted only when the source SHA-256 matches. The loader also retains the converted-manifest fallback. Do not duplicate presentation sources or reintroduce a manual file-picker workflow as the normal path.
 
 For local conversion: `python For-AI/scripts/import_presentation.py PATH_TO_PPTX`. Output is the exact embedded media plus a geometry manifest; no screenshots are used as a substitute for the embedded videos. Test before publishing. All future orchestration stays in this folder.
 

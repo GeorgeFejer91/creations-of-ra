@@ -26,28 +26,25 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn('.title-box{height:300px', css)
         self.assertIn('.bio-box{height:265px', css)
     def test_phone_guardrails(self):
-        code=(ROOT/'presentations/player.js').read_text()
-        self.assertIn('uuid !== controller?.uuid',code)
-        self.assertIn('data.seq <= peer.seq',code)
-        self.assertIn("$('approve').onclick",code)
-        self.assertIn('Date.now() - peer.lastSeen > 15000',code)
-        self.assertIn("$('show-controls').disabled = Boolean(controller)",code)
-        self.assertIn('for (const [uuid, peer] of peers)',code)
-        self.assertIn('showPendingRequest',code)
-        self.assertIn('ra:display-owner:',code)
+        code=(ROOT/'presentations/landing.js').read_text()
+        self.assertIn('controller&&uuid!==controller',code)
+        self.assertIn('data.version>lastVersion',code)
+        self.assertIn("data.type==='ended'",code)
+        self.assertIn('Date.now()-lastSeen>15000',code)
+        self.assertIn('view?.apply',code)
         controller=(ROOT/'presentations/controller.js').read_text()
-        self.assertIn("const invite = readInvite();",controller)
-        self.assertIn("$('control-panel').hidden = !show",controller)
-        html=(ROOT/'presentations/beyond-the-line/index.html').read_text()
-        self.assertIn('class="phone-button"><svg',html)
+        for phrase in ['connectController',"type:'state'","type:'ended'",'outputVolume',"$('finish-presentation').onclick"]:
+            self.assertIn(phrase,controller)
+        transport=(ROOT/'presentations/transport.js').read_text()
+        self.assertIn("sdk.announce({streamID:STREAM})",transport)
+        self.assertIn("sdk.view(STREAM,{audio:false,video:false})",transport)
         self.assertIn('MAIN_PPTX',(ROOT/'presentations/deck.js').read_text())
-        self.assertIn('getRandomValues',(ROOT/'presentations/transport.js').read_text())
     def test_converted_assets_when_available(self):
         path=ROOT/'assets/beyond-the-line/deck.json'
         if not path.exists():
             self.skipTest('Source media not imported; presentation assets not verified.')
         deck=json.loads(path.read_text())
-        self.assertEqual(len(deck['slides']),16)
+        self.assertEqual(len(deck['slides']),17)
         clips=[]
         for i,slide in enumerate(deck['slides']):
             self.assertTrue(slide['layers'])
@@ -56,6 +53,7 @@ class WebsiteTests(unittest.TestCase):
                 self.assertTrue((ROOT/layer['src'].lstrip('/')).is_file())
                 if layer['kind']=='video': clips.append(i+1)
         self.assertEqual(clips,[5,6,9])
+        self.assertEqual(deck['slides'][15]['title'],'Budget')
         self.assertAlmostEqual(deck['width']/deck['height'],16/9,places=3)
 
 if __name__=='__main__': unittest.main(verbosity=2)

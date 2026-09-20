@@ -12,11 +12,14 @@ import xml.etree.ElementTree as ET
 P = 'http://schemas.openxmlformats.org/presentationml/2006/main'
 A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
-TITLES = ['Beyond the Line', 'Why this matters to me', 'What happens when a border is drawn?', 'Rabia Saleemi', 'Joseph Potts', 'Haaji Ka Halva', 'How I work with people', 'Holding the space', 'Community co-creation', 'Meta Art', 'No one', 'One person', 'Two people', 'Connection requires both people', 'How it comes together', 'What remains?']
+TITLES = ['Beyond the Line', 'Why this matters to me', 'What happens when a border is drawn?', 'Rabia Saleemi', 'Joseph Potts', 'Haaji Ka Halva', 'How I work with people', 'Holding the space', 'Community co-creation', 'Meta Art', 'No one', 'One person', 'Two people', 'Connection requires both people', 'How it comes together', 'Budget', 'What remains?']
+MAIN_PPTX_SHA256 = 'a4b812278c3508f33d24af29bb6d8f1fa7974f053d968b2a680a985fce37990c'
+NATIVE_SLIDE_FALLBACKS = {16: '/assets/beyond-the-line/slide-16-budget.png'}
 
 def convert(source: Path, out: Path) -> dict:
     if source.stat().st_size > 100 * 1024 * 1024:
         raise ValueError('PPTX exceeds the 100 MB import limit.')
+    source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
     out.mkdir(parents=True, exist_ok=True)
     with ZipFile(source) as archive:
         if sum(i.file_size for i in archive.infolist()) > 180 * 1024 * 1024:
@@ -47,8 +50,9 @@ def convert(source: Path, out: Path) -> dict:
             base, name = posixpath.split(slide_path)
             links = rels(f'{base}/_rels/{name}.rels')
             doc = xml(slide_path)
-            if doc.findall(f'.//{{{A}}}t'):
-                raise ValueError('This exporter is for the supplied flattened deck, not editable text slides.')
+            fallback = NATIVE_SLIDE_FALLBACKS.get(index + 1) if source_sha256 == MAIN_PPTX_SHA256 else None
+            if doc.findall(f'.//{{{A}}}t') and not fallback:
+                raise ValueError('This exporter is for the supplied deck, not arbitrary editable text slides.')
             layers = []
             for picture in doc.findall(f'.//{{{P}}}pic'):
                 transform = picture.find(f'.//{{{A}}}xfrm')
@@ -61,8 +65,10 @@ def convert(source: Path, out: Path) -> dict:
                 media = video if video is not None else audio
                 props = picture.find(f'.//{{{P}}}cNvPr')
                 layers.append({'kind': 'image' if media is None else ('video' if video is not None else 'audio'), 'src': poster if media is None else copy_asset(base, links[media.get(f'{{{R}}}link')]), 'poster': poster, 'box': box, 'label': props.get('name', f'Slide {index+1}'), 'volume': 0.8})
+            if not layers and fallback:
+                layers.append({'kind': 'image', 'src': fallback, 'poster': fallback, 'box': [0, 0, 1, 1], 'label': TITLES[index], 'volume': 0.8})
             slides.append({'title': TITLES[index] if index < len(TITLES) else f'Slide {index+1}', 'layers': layers})
-    manifest = {'title': 'Beyond the Line', 'width': width, 'height': height, 'sourceSha256': hashlib.sha256(source.read_bytes()).hexdigest(), 'slides': slides}
+    manifest = {'title': 'Beyond the Line', 'width': width, 'height': height, 'sourceSha256': source_sha256, 'slides': slides}
     (out / 'deck.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
     return {'slides': len(slides), 'media': sum(x['kind'] != 'image' for s in slides for x in s['layers']), 'assets': inventory, 'sourceSha256': manifest['sourceSha256']}
 

@@ -16,7 +16,7 @@ At 320, 390, 768 and 1440px viewport widths, and 200% zoom: black background/whi
 
 ## Presentation
 
-Original supplied file yields 16 slides and exactly three HTML video elements on slides 5, 6, 9. Compare original media hashes and coordinates, not just slide count. All slides navigable; click-to-play, pause, seeking, mute, first/last, black screen and keyboard shortcuts work. Videos pause on slide change. The website chrome is monochrome but slide artwork retains original colour. No invented editable-text conversion: original slide text is rasterised in the uploaded file.
+Original supplied file yields 17 slides and exactly three HTML video elements on slides 5, 6, 9. Slide 16 is the native PowerPoint budget slide and must use its SHA-bound PowerPoint-exported raster fallback; the other 16 slides keep their original embedded images. Compare original media hashes and coordinates, not just slide count. All slides navigable; click-to-play, pause, seeking, mute, first/last, black screen and keyboard shortcuts work. Videos pause on slide change. The website chrome is monochrome but slide artwork retains original colour. Do not claim a general editable-text conversion.
 
 ## Presenter handshake
 
@@ -45,7 +45,11 @@ An actual attachment-to-PC binary upload action is not exposed by the current MC
 - Chromium offline rendering: 320/390/768/1440px, complete biography and no horizontal/text overflow. Original embedded video played and paused.
 - Presenter application logic: name request, deny without repeated prompt, approve, next, black screen, miniature preview, unapproved-sender refusal and revoke passed with explicit transport/measurement test doubles.
 - This authoring container blocks browser network navigation; actual CDN/Pretext integration, VDO.Ninja signaling, physical QR scanning and physical iOS/Android devices were NOT verified here. Do not label these checks as a live phone test.
-- The 41,815,513-byte canonical PPTX is published at `/assets/Beyond_the_Line_Rabia_Saleemi.pptx` and is the normal viewer/controller source.
+- The 41,815,513-byte canonical PPTX was published at `/assets/Beyond_the_Line_Rabia_Saleemi.pptx` and was the normal viewer/controller source for these checks.
+
+## Budget-slide update — 2026-09-20
+
+The 41,818,545-byte source has 17 slides. Local conversion found three videos on slides 5, 6 and 9. Headless Chromium loaded both `/presentations/` and `/presentations/controller/` with 17 slide elements, the PowerPoint-exported Budget fallback at slide 16, the original final slide at 17 and no page errors. Live deployment must be checked separately after publication.
 
 ## Framed presentation layout — panels9
 

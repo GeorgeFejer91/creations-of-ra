@@ -1,4 +1,4 @@
-import {loadPublishedDeck} from './deck.js?v=control8';
+import {loadPublishedDeck} from './deck.js?v=control9';
 import {createView} from './view.js?v=control8';
 import {connectController} from './transport.js?v=min6';
 
