@@ -40,7 +40,7 @@ fit = (ROOT/'assets/js/fit.js').read_text(encoding='utf-8').replace(
     'https://cdn.jsdelivr.net/npm/@chenglou/pretext@0.0.9/dist/layout.js',
     'data:text/javascript,throw new Error("Offline test: Pretext CDN unavailable")')
 script = (ROOT/'presentations/landing.js').read_text(encoding='utf-8')
-for path, source in [('/assets/js/fit.js', fit), ('./deck.js?v=control8', deck),
+for path, source in [('/assets/js/fit.js', fit), ('./deck.js?v=control9', deck),
                      ('./view.js?v=control8', view), ('./transport.js?v=min6', transport)]:
     script = script.replace("'" + path + "'", json.dumps(module_url(source)))
 html = (ROOT/'presentations/index.html').read_text(encoding='utf-8')
@@ -68,9 +68,9 @@ with sync_playwright() as p:
         }''')
         assert not result['overflow'] and result['inverted'] and result['text'], result
         assert result['aligned'] if width >= 1040 else result['stacked'], result
-        page.evaluate("window.__deliver({type:'state',version:1,index:0,media:[],sentAt:Date.now()},'fixture')")
+        page.evaluate("window.__deliver({type:'state',version:1,index:0,media:[],fullscreen:false,sentAt:Date.now()},'fixture')")
         assert page.locator('#idle').is_hidden() and page.locator('#live').is_visible()
-        assert page.locator('#live button').count() == 0
+        assert page.locator('#live button:visible').count() == 0
         page.evaluate("window.__deliver({type:'ended'},'fixture')")
         assert page.locator('#idle').is_visible() and page.locator('#live').is_hidden()
         checks.append(result)

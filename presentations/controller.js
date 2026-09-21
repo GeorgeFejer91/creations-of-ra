@@ -3,7 +3,7 @@ import {createView} from './view.js?v=control8';
 import {connectController} from './transport.js?v=min6';
 
 const $=id=>document.getElementById(id);
-let deck,view,channel,version=0,blackout=false,finished=false,heartbeat,outputVolume=.8;
+let deck,view,channel,version=0,blackout=false,fullscreen=true,finished=false,heartbeat,outputVolume=.8;
 const status=text=>$('controller-status').textContent=text;
 
 function activeMedia(){return view?.currentMedia()?.[0]||null;}
@@ -19,6 +19,7 @@ function state(){
     count:deck?.slides.length||0,
     title:deck?.slides?.[view?.index||0]?.title||'Beyond the Line',
     blackout,
+    fullscreen,
     media:mediaState()
   };
 }
@@ -34,6 +35,10 @@ function refresh(){
   if(media&&Number.isFinite(media.duration)&&media.duration>0)$('controller-seek').value=String(Math.round(media.currentTime/media.duration*1000));
   $('controller-volume').value=String(Math.round(outputVolume*100));
   $('controller-volume-value').value=`${Math.round(outputVolume*100)}%`;
+  $('fullscreen-on').disabled=fullscreen;
+  $('fullscreen-off').disabled=!fullscreen;
+  $('fullscreen-on').setAttribute('aria-pressed',String(fullscreen));
+  $('fullscreen-off').setAttribute('aria-pressed',String(!fullscreen));
 }
 async function toggleMedia(media){
   if(!media||finished)return;
@@ -47,6 +52,8 @@ async function act(action){
   if(action==='next')view.show(Math.min(deck.slides.length-1,view.index+1));
   if(action==='play')await toggleMedia(activeMedia());
   if(action==='blackout')blackout=!blackout;
+  if(action==='fullscreen-on')fullscreen=true;
+  if(action==='fullscreen-off')fullscreen=false;
   refresh();broadcast();
 }
 function receive(data,uuid){

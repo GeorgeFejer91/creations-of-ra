@@ -6,13 +6,16 @@
   <title>Presentations — Ra.</title>
   <meta name="description" content="Beyond the Line — Rabia Saleemi, Manchester Museum Partition Project.">
   <link rel="canonical" href="https://creations-of-ra.com/presentations/"><link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/styles.css?v=control8"><link rel="stylesheet" href="/presentations/player.css?v=panels9">
-  <script type="module" src="/presentations/landing.js?v=panels10"></script>
+  <link rel="stylesheet" href="/styles.css?v=control8"><link rel="stylesheet" href="/presentations/player.css?v=panels10">
+  <script type="module" src="/presentations/landing.js?v=panels11"></script>
 </head>
 <body class="presentation-page">
 <main id="presentation-app" data-layout="paired-panels">
   <section id="idle" class="presentation-idle">
-    <header class="presentation-header"><a class="presentation-home" href="/" aria-label="Ra home">Ra.</a></header>
+    <header class="presentation-header">
+      <a class="presentation-home" href="/" aria-label="Ra home">Ra.</a>
+      <button class="presentation-display-button" data-open-displays type="button" hidden>Open connected displays</button>
+    </header>
     <div class="presentation-card">
       <figure class="presentation-preview" aria-labelledby="presentation-title" aria-busy="true">
         <img id="cover" alt="Beyond the Line, original first slide" decoding="async" hidden>
@@ -42,6 +45,10 @@ Partition Project</span></p>
   <section id="live" class="presentation-live" hidden aria-label="Live presentation">
     <div id="viewer-stage" class="stage"></div>
     <div id="viewer-blackout" class="black-screen" hidden></div>
+    <div id="viewer-actions" class="viewer-actions" hidden>
+      <button id="viewer-fullscreen" class="viewer-action" type="button" hidden>Enter full screen</button>
+      <button class="viewer-action" data-open-displays type="button" hidden>Open connected displays</button>
+    </div>
   </section>
   <p id="presentation-status" class="sr-only" role="status">Waiting for controller.</p>
 </main>

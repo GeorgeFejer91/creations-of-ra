@@ -32,9 +32,14 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("data.type==='ended'",code)
         self.assertIn('Date.now()-lastSeen>15000',code)
         self.assertIn('view?.apply',code)
+        for phrase in ['requestFullscreen','document.exitFullscreen','data.fullscreen!==false','getScreenDetails','screen.isExtended','screenschange','window.open',"url.searchParams.set('mirror','1')"]:
+            self.assertIn(phrase,code)
         controller=(ROOT/'presentations/controller.js').read_text()
-        for phrase in ['connectController',"type:'state'","type:'ended'",'outputVolume',"$('finish-presentation').onclick"]:
+        for phrase in ['connectController',"type:'state'","type:'ended'",'outputVolume','fullscreen',"action==='fullscreen-on'","action==='fullscreen-off'","$('finish-presentation').onclick"]:
             self.assertIn(phrase,controller)
+        controller_html=(ROOT/'presentations/controller/index.html').read_text(encoding='utf-8')
+        self.assertIn('data-action="fullscreen-on"',controller_html)
+        self.assertIn('data-action="fullscreen-off"',controller_html)
         transport=(ROOT/'presentations/transport.js').read_text()
         self.assertIn("sdk.announce({streamID:STREAM})",transport)
         self.assertIn("sdk.view(STREAM,{audio:false,video:false})",transport)

@@ -5,8 +5,8 @@
   <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="dark"><meta name="theme-color" content="#000">
   <title>Presenter — Ra.</title><link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/styles.css?v=control8"><link rel="stylesheet" href="/presentations/player.css?v=control8">
-  <script type="module" src="/presentations/controller.js?v=control9"></script>
+  <link rel="stylesheet" href="/styles.css?v=control8"><link rel="stylesheet" href="/presentations/player.css?v=control10">
+  <script type="module" src="/presentations/controller.js?v=control10"></script>
 </head>
 <body class="controller-page">
 <main class="controller-shell">
@@ -16,6 +16,10 @@
     <div class="controller-meta"><span id="controller-title">Beyond the Line</span><span id="controller-count">1 / 17</span></div>
     <div class="controller-nav"><button data-action="prev">← Back</button><button data-action="next">Next →</button></div>
     <div class="controller-media"><button data-action="play" id="controller-play">Play video</button><button data-action="blackout">Black screen</button></div>
+    <div class="controller-display" aria-label="Presentation fullscreen">
+      <button data-action="fullscreen-on" id="fullscreen-on" aria-pressed="true">Full screen on</button>
+      <button data-action="fullscreen-off" id="fullscreen-off" aria-pressed="false">Full screen off</button>
+    </div>
     <label class="controller-seek">Media position<input id="controller-seek" type="range" min="0" max="1000" value="0"></label>
     <label class="controller-volume">
       <span>Volume</span><output id="controller-volume-value">80%</output>
