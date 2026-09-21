@@ -41,7 +41,7 @@ fit = (ROOT/'assets/js/fit.js').read_text(encoding='utf-8').replace(
     'data:text/javascript,throw new Error("Offline test: Pretext CDN unavailable")')
 script = (ROOT/'presentations/landing.js').read_text(encoding='utf-8')
 for path, source in [('/assets/js/fit.js', fit), ('./deck.js?v=control9', deck),
-                     ('./view.js?v=control8', view), ('./transport.js?v=min6', transport)]:
+                     ('./view.js?v=control9', view), ('./transport.js?v=min7', transport)]:
     script = script.replace("'" + path + "'", json.dumps(module_url(source)))
 html = (ROOT/'presentations/index.html').read_text(encoding='utf-8')
 html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.S)
@@ -63,15 +63,15 @@ with sync_playwright() as p:
           const right=document.querySelector('.controller-qr').getBoundingClientRect();
           return {width:innerWidth, overflow:document.documentElement.scrollWidth>innerWidth,
             aligned:Math.abs(left.y-right.y)<1 && Math.abs(left.height-right.height)<1,
-            stacked:right.y>left.bottom, inverted:getComputedStyle(document.querySelector('#controller-qr svg')).filter==='invert(1)',
+            stacked:right.y>left.bottom, qrDarkOnLight:getComputedStyle(document.querySelector('#controller-qr')).backgroundColor==='rgb(255, 255, 255)' && getComputedStyle(document.querySelector('#controller-qr svg')).filter==='none',
             text:[...document.querySelectorAll('[data-fit]')].every(e=>e.dataset.fitted==='dom-fallback' && e.dataset.truncated==='false' && e.firstElementChild.scrollHeight<=e.clientHeight+1 && e.firstElementChild.scrollWidth<=e.clientWidth+1)};
         }''')
-        assert not result['overflow'] and result['inverted'] and result['text'], result
+        assert not result['overflow'] and result['qrDarkOnLight'] and result['text'], result
         assert result['aligned'] if width >= 1040 else result['stacked'], result
-        page.evaluate("window.__deliver({type:'state',version:1,index:0,media:[],fullscreen:false,sentAt:Date.now()},'fixture')")
+        page.evaluate("window.__deliver({type:'state',protocol:'ra-presentation-control',protocolVersion:1,sessionId:'fixture-session-123456789',sequence:1,revision:1,index:0,count:1,media:[],blackout:false,fullscreen:false,sentAt:Date.now()},'fixture')")
         assert page.locator('#idle').is_hidden() and page.locator('#live').is_visible()
         assert page.locator('#live button:visible').count() == 0
-        page.evaluate("window.__deliver({type:'ended'},'fixture')")
+        page.evaluate("window.__deliver({type:'ended',protocol:'ra-presentation-control',protocolVersion:1,sessionId:'fixture-session-123456789'},'fixture')")
         assert page.locator('#idle').is_visible() and page.locator('#live').is_hidden()
         checks.append(result)
         page.close()

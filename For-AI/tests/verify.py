@@ -43,14 +43,18 @@ class WebsiteTests(unittest.TestCase):
     def test_phone_guardrails(self):
         code=(ROOT/'presentations/landing.js').read_text()
         self.assertIn('controller&&uuid!==controller',code)
-        self.assertIn('data.version>lastVersion',code)
+        self.assertIn('data.sequence<=lastSequence',code)
+        self.assertIn("type:'applied'",code)
+        self.assertLess(code.index('idle();connect();'),code.index('deck=await loadPublishedDeck()'))
         self.assertIn("data.type==='ended'",code)
         self.assertIn('Date.now()-lastSeen>15000',code)
-        self.assertIn('view?.apply',code)
+        self.assertIn('view.apply',code)
         for phrase in ['requestFullscreen','document.exitFullscreen','data.fullscreen!==false','getScreenDetails','screen.isExtended','screenschange','window.open',"url.searchParams.set('mirror','1')"]:
             self.assertIn(phrase,code)
+        for phrase in ['showAudioFallback','enableAudio','onPlaybackBlocked']:
+            self.assertIn(phrase,code if phrase!='onPlaybackBlocked' else (ROOT/'presentations/view.js').read_text())
         controller=(ROOT/'presentations/controller.js').read_text()
-        for phrase in ['connectController',"type:'state'","type:'ended'",'outputVolume','fullscreen',"action==='fullscreen-on'","action==='fullscreen-off'","$('finish-presentation').onclick"]:
+        for phrase in ['connectController',"type:'state'","type:'ended'",'sessionId','sequence','revision','outputVolume','fullscreen',"action==='fullscreen-on'","action==='fullscreen-off'","$('finish-presentation').onclick",'controller_in_use',"location.replace('/presentations/?controller=busy')"]:
             self.assertIn(phrase,controller)
         controller_html=(ROOT/'presentations/controller/index.html').read_text(encoding='utf-8')
         self.assertIn('data-action="fullscreen-on"',controller_html)
@@ -58,6 +62,11 @@ class WebsiteTests(unittest.TestCase):
         transport=(ROOT/'presentations/transport.js').read_text()
         self.assertIn("sdk.announce({streamID:STREAM})",transport)
         self.assertIn("sdk.view(STREAM,{audio:false,video:false})",transport)
+        self.assertIn('isControllerConflict',transport)
+        self.assertIn('await wait(1400)',transport)
+        css=(ROOT/'presentations/player.css').read_text()
+        self.assertNotIn('filter:invert(1)',css.split('.controller-qr .qr svg',1)[1].split('}',1)[0])
+        self.assertIn('background:#fff',css.split('.controller-qr .qr{',1)[1].split('}',1)[0])
         self.assertIn('MAIN_PPTX',(ROOT/'presentations/deck.js').read_text())
     def test_converted_assets_when_available(self):
         path=ROOT/'assets/beyond-the-line/deck.json'

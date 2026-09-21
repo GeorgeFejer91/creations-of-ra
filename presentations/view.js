@@ -1,5 +1,5 @@
 // Every browser renders the published PowerPoint locally. Network messages carry state only.
-export function createView(stage, deck, onMediaClick = () => {}, onChange = () => {}) {
+export function createView(stage, deck, onMediaClick = () => {}, onChange = () => {}, onPlaybackBlocked = () => {}) {
   stage.replaceChildren();stage.style.aspectRatio=String(deck.width/deck.height);
   const resize=new ResizeObserver(([entry])=>{
     const ratio=deck.width/deck.height;
@@ -63,7 +63,11 @@ export function createView(stage, deck, onMediaClick = () => {}, onChange = () =
         if(Number.isFinite(el.duration)&&Math.abs(el.currentTime-target)>(playback.paused?0.06:0.35))el.currentTime=Math.min(el.duration,target);
         el.playbackRate=playback.rate||1;
         if(playback.paused)el.pause();
-        else if(el.paused)el.play().catch(()=>{});
+        else if(el.paused)el.play().catch(()=>{
+          const wantedAudio=!el.muted;
+          el.muted=true;el.play().catch(()=>{});
+          if(wantedAudio)onPlaybackBlocked();
+        });
       }
     },
     dispose(){resize.disconnect();media.forEach(el=>el.pause());stage.replaceChildren();}

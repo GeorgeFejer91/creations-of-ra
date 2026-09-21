@@ -1,9 +1,11 @@
 import {loadPublishedDeck} from './deck.js?v=control9';
-import {createView} from './view.js?v=control8';
-import {connectController} from './transport.js?v=min6';
+import {createView} from './view.js?v=control9';
+import {connectController,isControllerConflict,PROTOCOL,PROTOCOL_VERSION} from './transport.js?v=min7';
 
 const $=id=>document.getElementById(id);
-let deck,view,channel,version=0,blackout=false,fullscreen=true,finished=false,heartbeat,outputVolume=.8;
+const sessionId=crypto.randomUUID?.()||Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
+const viewers=new Map();
+let deck,view,channel,sequence=0,revision=0,blackout=false,fullscreen=true,finished=false,heartbeat,outputVolume=.8;
 const status=text=>$('controller-status').textContent=text;
 
 function activeMedia(){return view?.currentMedia()?.[0]||null;}
@@ -13,7 +15,11 @@ function mediaState(){
 function state(){
   return {
     type:'state',
-    version:++version,
+    protocol:PROTOCOL,
+    protocolVersion:PROTOCOL_VERSION,
+    sessionId,
+    sequence:++sequence,
+    revision,
     sentAt:Date.now(),
     index:view?.index||0,
     count:deck?.slides.length||0,
@@ -23,7 +29,13 @@ function state(){
     media:mediaState()
   };
 }
-function broadcast(target){if(channel&&!finished)channel.send(state(),target);}
+function broadcast(target){if(channel&&view&&deck&&!finished)channel.send(state(),target);}
+function connectionStatus(){
+  const now=Date.now();
+  for(const [uuid,seen] of viewers)if(now-seen>10000)viewers.delete(uuid);
+  const count=viewers.size;
+  status(count?`${count} presentation screen${count===1?'':'s'} synchronized.`:'You control the presentation. Waiting for presentation screens.');
+}
 function refresh(){
   if(!view||!deck)return;
   $('controller-count').textContent=`${view.index+1} / ${deck.slides.length}`;
@@ -44,59 +56,75 @@ async function toggleMedia(media){
   if(!media||finished)return;
   media.muted=true;
   try{media.paused?await media.play():media.pause();}catch{}
-  refresh();broadcast();
+  revision++;refresh();broadcast();
 }
 async function act(action){
   if(!view||finished)return;
+  if(action==='play'){await toggleMedia(activeMedia());return;}
   if(action==='prev')view.show(Math.max(0,view.index-1));
   if(action==='next')view.show(Math.min(deck.slides.length-1,view.index+1));
-  if(action==='play')await toggleMedia(activeMedia());
   if(action==='blackout')blackout=!blackout;
   if(action==='fullscreen-on')fullscreen=true;
   if(action==='fullscreen-off')fullscreen=false;
-  refresh();broadcast();
+  revision++;refresh();broadcast();
 }
 function receive(data,uuid){
+  if(data.protocol!==PROTOCOL||data.protocolVersion!==PROTOCOL_VERSION)return;
   if(data.type==='hello'){broadcast(uuid);return;}
-  if(data.type==='ping')channel?.send({type:'pong'},uuid);
+  if(data.type==='applied'&&data.sessionId===sessionId&&Number.isSafeInteger(data.sequence)){
+    viewers.set(uuid,Date.now());connectionStatus();return;
+  }
+  if(data.type==='ping'&&data.sessionId===sessionId)channel?.send({type:'pong',protocol:PROTOCOL,protocolVersion:PROTOCOL_VERSION,sessionId},uuid);
 }
 async function finish(){
   if(finished)return;finished=true;clearInterval(heartbeat);
-  try{channel?.send({type:'ended'});}catch{}
+  try{channel?.send({type:'ended',protocol:PROTOCOL,protocolVersion:PROTOCOL_VERSION,sessionId});}catch{}
   try{await channel?.close();}catch{}
   $('controller-panel').hidden=true;status('Presentation finished.');
   setTimeout(()=>location.replace('/presentations/'),600);
 }
 async function boot(){
+  const redirectToViewer=()=>{
+    if(finished)return;finished=true;clearInterval(heartbeat);
+    channel?.close().catch(()=>{});location.replace('/presentations/?controller=busy');
+  };
   try{
-    deck=await loadPublishedDeck();
+    const deckPromise=loadPublishedDeck();
+    channel=await connectController(receive,(event,detail)=>{
+      if(event==='open'&&detail)setTimeout(()=>broadcast(detail),0);
+      if(event==='closed'&&detail){viewers.delete(detail);connectionStatus();}
+      if(event==='error'&&isControllerConflict(detail))redirectToViewer();
+    });
+    deck=await deckPromise;
     view=createView(
       $('controller-stage'),
       deck,
       layer=>toggleMedia(view?.currentMedia().find(media=>Number(media.dataset.layer)===layer)),
-      ()=>{refresh();broadcast();}
+      ()=>{revision++;refresh();broadcast();}
     );
     view.setInteractive(true);
     view.media.forEach(media=>{media.muted=true;media.volume=outputVolume;});
     refresh();
-    channel=await connectController(receive,(event,uuid)=>{if(event==='open'&&uuid)setTimeout(()=>broadcast(uuid),0);});
-    $('controller-panel').hidden=false;status('You control the presentation.');broadcast();
-    heartbeat=setInterval(()=>broadcast(),700);
-  }catch(error){status(error.message);return;}
+    $('controller-panel').hidden=false;connectionStatus();broadcast();
+    heartbeat=setInterval(()=>{broadcast();connectionStatus();},700);
+  }catch(error){
+    if(error?.code==='controller_in_use'||isControllerConflict(error)){redirectToViewer();return;}
+    status(error.message);return;
+  }
   document.querySelectorAll('[data-action]').forEach(button=>button.onclick=()=>act(button.dataset.action));
   $('controller-seek').oninput=e=>{
     const media=activeMedia();
     if(media&&Number.isFinite(media.duration))media.currentTime=Number(e.target.value)/1000*media.duration;
-    refresh();broadcast();
+    revision++;refresh();broadcast();
   };
   $('controller-volume').oninput=e=>{
     outputVolume=Math.max(0,Math.min(1,Number(e.target.value)/100));
     view?.media.forEach(media=>{media.volume=outputVolume;media.muted=true;});
-    refresh();broadcast();
+    revision++;refresh();broadcast();
   };
   $('finish-presentation').onclick=finish;
 }
 window.addEventListener('pagehide',()=>{
-  if(!finished){try{channel?.send({type:'ended'});}catch{}channel?.close();}
+  if(!finished){try{channel?.send({type:'ended',protocol:PROTOCOL,protocolVersion:PROTOCOL_VERSION,sessionId});}catch{}channel?.close();}
 });
 boot();
