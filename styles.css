@@ -24,6 +24,6 @@
 .cv-download{position:absolute;right:24px;font-family:var(--sans)}
 .cv-viewer{min-width:0;min-height:0;overflow:auto;padding:24px;background:#000}
 .cv-pages{width:min(100%,900px);margin:0 auto}
-.cv-page-image{display:block;width:100%;height:auto;margin:0 0 24px;filter:invert(1) hue-rotate(180deg)}
+.cv-page-image{display:block;width:100%;height:auto;margin:0 0 24px;border:1px solid #777;filter:invert(1) hue-rotate(180deg)}
 .cv-page-image:last-child{margin-bottom:0}
 @media(max-width:600px){.cv-page{grid-template-rows:64px minmax(0,1fr)}.cv-toolbar{padding:0 16px}.cv-download{right:16px}.cv-viewer{padding:0}.cv-page-image{margin-bottom:12px}}
