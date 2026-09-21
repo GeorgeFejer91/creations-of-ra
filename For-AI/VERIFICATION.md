@@ -58,3 +58,7 @@ Applied and checked SHA-identical copies of `presentations/index.html`, `player.
 Scope: real HTML/CSS and the existing fit.js **DOM fallback**, with a local original slide image and explicit deck/transport/QR fixtures. Browser network navigation returned ERR_BLOCKED_BY_ADMINISTRATOR. The actual Pretext CDN engine, production PPTX download, VDO.Ninja connection, and physical inverted-QR scanning were NOT verified by this check. Pretext remains the production primary fitting engine, not the test fixture. The supplied deck and active control/data-channel code were not changed.
 
 Run the focused layout check with `python For-AI/tests/verify_presentation_panels.py --cover PATH_TO_EXTRACTED_FIRST_SLIDE_PNG`. It uses Playwright and Python qrcode for isolated fixtures, not live device testing.
+
+## CV integration — 2026-09-21
+
+The homepage now has four links, with CV opening `/cv/`. The page embeds the canonical two-page PDF and applies CSS inversion only to the embedded viewer; the download link targets the unchanged white PDF. Structural verification passed 7 tests, including the four-link count, PDF magic bytes, matching view/download paths and the inversion rule. Headless Chromium rendered the updated homepage at desktop and narrow widths without JavaScript errors; its built-in PDF extension does not paint document pages in headless screenshots, so that screenshot is not evidence of native PDF rendering.

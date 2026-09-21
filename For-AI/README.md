@@ -4,7 +4,7 @@ This is the first file every agent must read. Then read `VERIFICATION.md`. This 
 
 ## Product and source of truth
 
-A black-and-white, minimalist link hub and presentation site for **Ra / Rabia Saleemi**. Public site: https://creations-of-ra.com/. Repository: https://github.com/GeorgeFejer91/creations-of-ra. The visible homepage contains only `Ra.` plus Presentations, Instagram and Behance links. Do not add biography, journal, placeholder copy or extra navigation unless explicitly requested.
+A black-and-white, minimalist link hub and presentation site for **Ra / Rabia Saleemi**. Public site: https://creations-of-ra.com/. Repository: https://github.com/GeorgeFejer91/creations-of-ra. The visible homepage contains only `Ra.` plus Presentations, Instagram, Behance and CV links. The CV page visually inverts the embedded PDF while its direct download remains the original white document. Do not add biography, journal, placeholder copy or extra navigation unless explicitly requested.
 
 Beyond the Line is the supplied 17-slide Manchester Museum Partition Project presentation. Its PowerPoint has 16 raster slide images, three embedded H.264/AAC MP4 videos and one native PowerPoint budget slide. Preserve image layers, original artwork colours, native slide aspect ratio, coordinates, slide order and embedded media. The browser uses a PowerPoint export for the native budget slide and renders the other original image/video elements with slideshow controls. Do not claim a general PowerPoint engine or invent animations. See SOURCES.md.
 

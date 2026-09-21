@@ -15,6 +15,17 @@ class WebsiteTests(unittest.TestCase):
         html = (ROOT/'index.html').read_text()
         self.assertIn('https://www.instagram.com/creations_of_ra_/', html)
         self.assertRegex(html, r'href="https://www.instagram.com/creations_of_ra_/" target="_blank" rel="noopener noreferrer"')
+    def test_cv_view_and_download(self):
+        home = (ROOT/'index.html').read_text(encoding='utf-8')
+        page = (ROOT/'cv/index.html').read_text(encoding='utf-8')
+        css = (ROOT/'styles.css').read_text(encoding='utf-8')
+        pdf = ROOT/'assets/rabia-saleemi-artist-cv-2026.pdf'
+        self.assertEqual(len(re.findall(r'<a\s+href=', home.split('<nav class="profile-links"', 1)[1].split('</nav>', 1)[0])), 4)
+        self.assertIn('href="/cv/"', home)
+        self.assertIn('src="/assets/rabia-saleemi-artist-cv-2026.pdf#', page)
+        self.assertIn('href="/assets/rabia-saleemi-artist-cv-2026.pdf" download="Rabia_Saleemi_Artist_CV_2026.pdf"', page)
+        self.assertIn('filter:invert(1) hue-rotate(180deg)', css)
+        self.assertTrue(pdf.read_bytes().startswith(b'%PDF-'))
     def test_pretext_is_real_primary_import(self):
         code = (ROOT/'assets/js/fit.js').read_text()
         for phrase in ['@chenglou/pretext@0.0.9','prepareWithSegments','measureLineStats','measureNaturalWidth','ResizeObserver']:
