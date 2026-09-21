@@ -22,9 +22,13 @@ class WebsiteTests(unittest.TestCase):
         pdf = ROOT/'assets/rabia-saleemi-artist-cv-2026.pdf'
         self.assertEqual(len(re.findall(r'<a\s+href=', home.split('<nav class="profile-links"', 1)[1].split('</nav>', 1)[0])), 4)
         self.assertIn('href="/cv/"', home)
-        self.assertIn('src="/assets/rabia-saleemi-artist-cv-2026.pdf#', page)
+        self.assertEqual(page.count('class="cv-page-image"'), 2)
+        self.assertIn('src="/assets/cv/page-1.png"', page)
+        self.assertIn('src="/assets/cv/page-2.png"', page)
         self.assertIn('href="/assets/rabia-saleemi-artist-cv-2026.pdf" download="Rabia_Saleemi_Artist_CV_2026.pdf"', page)
         self.assertIn('filter:invert(1) hue-rotate(180deg)', css)
+        self.assertTrue((ROOT/'assets/cv/page-1.png').read_bytes().startswith(b'\x89PNG'))
+        self.assertTrue((ROOT/'assets/cv/page-2.png').read_bytes().startswith(b'\x89PNG'))
         self.assertTrue(pdf.read_bytes().startswith(b'%PDF-'))
     def test_pretext_is_real_primary_import(self):
         code = (ROOT/'assets/js/fit.js').read_text()
