@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import re
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,8 +39,25 @@ class WebsiteTests(unittest.TestCase):
         css=(ROOT/'styles.css').read_text()
         self.assertIn('--paper:#000', css)
         self.assertIn('--ink:#fff', css)
-        self.assertIn('.title-box{height:300px', css)
-        self.assertIn('.bio-box{height:265px', css)
+        self.assertIn('.link-hub{width:min(100%,420px)', css)
+        self.assertIn('.profile-links a{display:flex', css)
+        self.assertNotIn('.journal-note', css)
+    def test_public_route_allowlist(self):
+        tracked=set(subprocess.check_output(['git','ls-files','*.html'],cwd=ROOT,text=True).splitlines())
+        tracked-=set(subprocess.check_output(['git','ls-files','--deleted','*.html'],cwd=ROOT,text=True).splitlines())
+        self.assertEqual(tracked,{
+            '404.html','cv/index.html','index.html',
+            'presentations/controller/index.html','presentations/index.html'
+        })
+        home=(ROOT/'index.html').read_text(encoding='utf-8')
+        presentation=(ROOT/'presentations/index.html').read_text(encoding='utf-8')
+        self.assertNotIn('/presentations/controller/',home)
+        self.assertIn('href="/presentations/controller/"',presentation)
+        sitemap=(ROOT/'sitemap.xml').read_text(encoding='utf-8')
+        self.assertEqual(sitemap.count('<url>'),3)
+        self.assertNotIn('/controller/',sitemap)
+        for dead in ['feed.xml','presentations/player.js']:
+            self.assertFalse((ROOT/dead).exists(),dead)
     def test_phone_guardrails(self):
         code=(ROOT/'presentations/landing.js').read_text()
         self.assertIn('controller&&uuid!==controller',code)

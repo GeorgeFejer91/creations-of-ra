@@ -13,7 +13,7 @@ Beyond the Line is the supplied 17-slide Manchester Museum Partition Project pre
 1. Design the **placement, width, height and relative proportions** of web elements in CSS first. Responsive breakpoints intentionally establish a new geometry; content must not arbitrarily resize it.
 2. A constrained text box is the input, not the output. **Fit the text to the box, not the box to the text.** Use actual **Cheng Lou Pretext** measurement as the primary fitting method. `assets/js/fit.js` is the one fitting implementation.
 3. Mark fixed text boxes with `data-fit`, `data-fit-min`, `data-fit-max`, optional `data-fit-line` and `data-fit-single`; put the plain text in a child span. ResizeObserver watches the box. Pretext caches prepared text and a bounded binary search chooses the largest fitting type size. Font family, style, weight, letter spacing and line height must match CSS.
-4. Define readable lower bounds. If variable names/status labels cannot fit at that bound, use measured grapheme truncation or a compact label, retaining full text in accessible text/title. Do not shrink essential information to illegibility. Biography must remain complete at the tested widths. No guessed character counts, trial-and-error font breakpoints, overflow hidden as the only solution, or text-driven panel expansion.
+4. Define readable lower bounds. If variable names/status labels cannot fit at that bound, use measured grapheme truncation or a compact label, retaining full text in accessible text/title. Do not shrink essential information to illegibility. No guessed character counts, trial-and-error font breakpoints, overflow hidden as the only solution, or text-driven panel expansion.
 5. Verify both dimensions in the rendered browser, after font loading and resizing. A missing Pretext import is not proof of fitting. Keep readable CSS as a failure fallback and report the unavailable library rather than claiming it worked.
 6. Site chrome is black (#000) with white (#fff) type and restrained neutral secondary text/rules. No gradients, decorative cards, heavy rounding, dashboards or needless animations. Original presentation artwork is exempt from recolouring to preserve fidelity.
 7. Use existing elements and one shared stylesheet. Minimum touch targets 44–48px, keyboard access, focus states and reduced-motion support remain required. Ordinary document scrolling is allowed; overflowing text must never force a fixed control to grow or introduce horizontal scrolling.
@@ -22,7 +22,7 @@ Beyond the Line is the supplied 17-slide Manchester Museum Partition Project pre
 
 | Resource | When and how |
 | --- | --- |
-| [Ponytail](https://github.com/DietrichGebert/ponytail/blob/main/skills/ponytail/SKILL.md) | Every implementation, fix and review: existing code → native/standard APIs → existing dependencies → minimum new code. YAGNI and KISS. |
+| [Ponytail](https://github.com/DietrichGebert/ponytail/blob/main/skills/ponytail/SKILL.md) | **Mandatory for every backend and frontend design, implementation, fix, refactor and review.** Read and apply the installed Ponytail skill before changing code: existing code → native/standard APIs → existing dependencies → minimum new code. Prefer deletion, YAGNI and KISS. |
 | [Uncodixfy](https://github.com/cyxzdev/Uncodixfy) | Every visible UI choice. Restrained utility controls, existing visual language, minimal hierarchy. |
 | [Pretext](https://github.com/chenglou/pretext) | Runtime text fitted to fixed geometry. This is a library, not an invented skill file. Read its actual README/API and use the pinned package. |
 | [VDO.Ninja SDK](https://github.com/steveseguin/ninjasdk) | Phone pairing / WebRTC data channels only. Read its API before modifying the transport. |
@@ -44,10 +44,11 @@ Install/load relevant skills using the agent's existing mechanism, or read their
 - `assets/js/fit.js`: geometry-first Pretext fitting.
 - `presentations/index.html`: the only public presentation page. Before control it shows the first-slide preview plus one controller QR; while controlled it becomes a viewport-filling synchronized viewer. Local buttons appear only when the browser requires a one-time fullscreen or connected-display gesture.
 - `presentations/controller/`: hidden/noindex smartphone controller reached only through the QR.
-- `presentations/beyond-the-line/`: compatibility redirect to `/presentations/`, not a separate product screen.
 - `presentations/deck.js`, `view.js`: every browser independently downloads and renders the canonical published PPTX at original embedded-media quality.
 - `presentations/transport.js`: one fixed VDO.Ninja **data-only** publisher stream. It carries only presentation control/state (slide index, media time/play-pause, blackout, finish/heartbeat); never slide images, video frames, screenshots, audio or presentation media. The phone is the publisher/controller; every presentations page is a viewer. Camera/microphone/media transport are forbidden unless the user explicitly requests actual audio/visual transmission.
 - No CMS, database, login service, analytics, viewer mode selector, approval dialog or general presentation framework.
+
+The complete visitor-route allowlist is `/`, `/cv/` and `/presentations/`. `/presentations/controller/` is the sole intentionally unlinked/hidden route and is reached through the presentation QR. `404.html` is only the GitHub Pages error document, not a product route. Do not add compatibility redirects, blog/journal pages, feeds, demos, alternate viewers or other public subpages unless the user explicitly adds them to the landing page. Hidden/noindex is discoverability, not access control; never describe the static controller URL as cryptographically secret.
 
 Runtime dependencies are pinned: Pretext 0.0.9 (MIT), fflate 0.8.2 (MIT), qrcode-generator 1.4.4 (MIT), VDO.Ninja SDK 1.5.5 (MPL-2.0). Served by jsDelivr; source links and third-party limitations are in SOURCES.md. Pin upgrades deliberately. No third-party fonts. QR is generated locally, never by an external QR-image service.
 

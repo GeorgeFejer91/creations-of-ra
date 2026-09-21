@@ -1,10 +1,6 @@
 # Verification / definition of done
 
-## Viewer-first update — 2026-09-18
-
-V.2 writes were applied to the actual CreationsOfRa workspace. Browser checks used SHA-matched copies of player.js, controller.js, view.js, their HTML and CSS. In-memory browser documents with test transport/measurement and locally supplied original media passed: viewer default; opt-in controls; fullscreen without application chrome; deferred approval; exclusive phone control; local/unapproved/replayed command refusal; synchronized embedded MP4 play/pause; blackout; and release back to viewing. No page JavaScript errors were observed. Screenshot: fullscreen-viewer-only.png in the authoring verification output.
-
-These are application-behavior checks, NOT live VDO.Ninja signaling, physical QR scans, physical iOS/Android tests, or real Pretext-CDN integration. Network browser navigation in the authoring container returned `net::ERR_BLOCKED_BY_ADMINISTRATOR`, so those tests could not run here. Cross-device copied-link ownership should also be exercised in a network-enabled browser.
+## Current baseline
 
 The canonical `assets/Beyond_the_Line_Rabia_Saleemi.pptx` is now published successfully through V.2 and is the primary browser source. Verification must confirm that each viewer downloads/renders that deck locally; VDO.Ninja must carry control/state only and never image/video payloads.
 
@@ -12,7 +8,7 @@ Run checks against the actual deployed URL as well as local code. Record observe
 
 ## Styling
 
-At 320, 390, 768 and 1440px viewport widths, and 200% zoom: black background/white primary type; no horizontal overflow; fixed text box geometry unchanged by long labels; actual Pretext import ready; all data-fit boxes have fitted=pretext; no essential biography text truncated; readable font floors; Instagram opens the exact account in a new tab; keyboard focus remains visible. Rendering a page when the CDN is blocked only verifies the CSS fallback.
+At 320, 390, 768 and 1440px viewport widths, and 200% zoom: black background/white primary type; no horizontal overflow; fixed text box geometry unchanged by long labels; actual Pretext import ready; all data-fit boxes have fitted=pretext; readable font floors; Instagram opens the exact account in a new tab; keyboard focus remains visible. Rendering a page when the CDN is blocked only verifies the CSS fallback.
 
 ## Presentation
 
@@ -33,21 +29,13 @@ On a Windows or macOS computer with an extended second display/projector, use a 
 
 ## Publication
 
-Source files in For-AI are repository metadata, not visitor navigation. robots.txt discourages indexing For-AI and the controller; this is not access control. Never include secrets. Publish exact paths with V.2, read back remote SHA, then call github_direct_pages_status with expectedCommit and a new exact homepage phrase. Verify /presentations/, the player, JS modules, CSS, source/converted media and actual content, not only HTTP200.
+Source files in For-AI are repository metadata, not visitor navigation. robots.txt discourages indexing For-AI and the controller; this is not access control. Never include secrets. The tracked visitor HTML allowlist is exactly `index.html`, `cv/index.html`, `presentations/index.html`, `presentations/controller/index.html` and the platform `404.html`; the controller is the only intentionally unlinked route. Publish exact paths, read back remote SHA, and verify `/`, `/cv/`, `/presentations/`, the controller, JS modules, CSS, source media and actual content, not only HTTP 200.
 
 ## Status of this implementation
 
-An actual attachment-to-PC binary upload action is not exposed by the current MCP. The website includes a browser-local PowerPoint opener and a standard-library converter so the presentation can be used without pretending the media was uploaded. Public media availability must be recorded separately from player code availability.
+The published canonical PowerPoint is loaded directly by every viewer. Public media availability must be recorded separately from presentation code availability.
 
 `For-AI/tests/verify.py` validates extracted source structure and source-code contracts. Browser/physical-device checks and live asset availability are separate evidence; this script does not claim to verify WebRTC signaling.
-
-## Observed authoring checks (2026-09-18)
-
-- Structural tests: 6 passed, including 16 slides / media on 5, 6 and 9. Original PNG/MP4 bytes extracted unchanged; source digest in SOURCES.md.
-- Chromium offline rendering: 320/390/768/1440px, complete biography and no horizontal/text overflow. Original embedded video played and paused.
-- Presenter application logic: name request, deny without repeated prompt, approve, next, black screen, miniature preview, unapproved-sender refusal and revoke passed with explicit transport/measurement test doubles.
-- This authoring container blocks browser network navigation; actual CDN/Pretext integration, VDO.Ninja signaling, physical QR scanning and physical iOS/Android devices were NOT verified here. Do not label these checks as a live phone test.
-- The 41,815,513-byte canonical PPTX was published at `/assets/Beyond_the_Line_Rabia_Saleemi.pptx` and was the normal viewer/controller source for these checks.
 
 ## Budget-slide update — 2026-09-20
 
@@ -55,9 +43,9 @@ The 41,818,545-byte source has 17 slides. Local conversion found three videos on
 
 ## Framed presentation layout — panels9
 
-Applied and checked SHA-identical copies of `presentations/index.html`, `player.css` and `landing.js`. Offline Chromium checks at 320, 390, 768, 1024, 1100, 1440 and 1920px passed: no horizontal overflow; no truncated/overflowing current labels; equal panel top/bottom edges on desktop; stacked panels at narrower widths; QR SVG inversion; decoded first-slide preview; live/idle transition still hides/restores the panels. No page JavaScript errors were observed.
+Applied and checked SHA-identical copies of `presentations/index.html`, `player.css` and `landing.js`. Offline Chromium checks at 320, 390, 768, 1024, 1100, 1440 and 1920px passed: no horizontal overflow; no truncated/overflowing current labels; equal panel top/bottom edges on desktop; stacked panels at narrower widths; dark-on-white QR rendering; decoded first-slide preview; live/idle transition still hides/restores the panels. No page JavaScript errors were observed.
 
-Scope: real HTML/CSS and the existing fit.js **DOM fallback**, with a local original slide image and explicit deck/transport/QR fixtures. Browser network navigation returned ERR_BLOCKED_BY_ADMINISTRATOR. The actual Pretext CDN engine, production PPTX download, VDO.Ninja connection, and physical inverted-QR scanning were NOT verified by this check. Pretext remains the production primary fitting engine, not the test fixture. The supplied deck and active control/data-channel code were not changed.
+Scope: real HTML/CSS and the existing fit.js **DOM fallback**, with a local original slide image and explicit deck/transport/QR fixtures. The actual Pretext CDN engine, production PPTX download, VDO.Ninja connection, and physical phone scanning were not verified by that isolated check. Pretext remains the production primary fitting engine, not the test fixture.
 
 Run the focused layout check with `python For-AI/tests/verify_presentation_panels.py --cover PATH_TO_EXTRACTED_FIRST_SLIDE_PNG`. It uses Playwright and Python qrcode for isolated fixtures, not live device testing.
 
@@ -74,3 +62,7 @@ The connected-display path is covered by source-contract checks for `screen.isEx
 ## CV integration — 2026-09-21
 
 The homepage now has four links, with CV opening `/cv/`. The page displays two high-resolution renders from the canonical PDF and applies CSS inversion only to those online pages; the download link targets the unchanged white PDF. Structural verification passed 7 tests, including the four-link count, both page renders, PDF magic bytes, the download path and the inversion rule. Native embedded PDF painting was rejected after live browser verification showed a blank plugin surface; static page renders avoid that browser-dependent failure.
+
+## Public route cleanup — 2026-09-21
+
+The tracked visitor documents are now exactly `/`, `/cv/`, `/presentations/`, the QR-linked hidden `/presentations/controller/`, and GitHub Pages `404.html`. The orphan journal post, RSS feed, obsolete presentation redirect, unreferenced legacy player and their retired browser-test doubles were removed. The shared stylesheet retained only rules used by those surviving documents. Structural verification passed 8 tests, including the exact HTML allowlist and controller-only hidden-route rule. Local Chromium loaded the landing, CV, presentation, controller and 404 documents without horizontal overflow or console errors.
