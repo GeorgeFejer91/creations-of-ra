@@ -1,5 +1,17 @@
 # Start here: Creations of Ra
 
+## Common control-plane contract
+
+- **Boundary:** Product source, shipped assets, user documentation, and final deliverables stay outside this folder. This folder owns agent routing, durable context, verification policy, and decision pointers.
+- **Authority:** Direct instructions and the nearest `AGENTS.md` win. Existing project documents remain authoritative for their named subjects; link instead of copying.
+- **Skills:** Use `$ponytail` for every implementation, fix, refactor, code review, and technical design when available. Load other skills only for matching tasks; do not create speculative skill infrastructure.
+- **Workflow:** Define one bounded outcome and its checks, reuse what exists, and make the smallest coherent diff.
+- **Verification:** A task is ready only after focused checks, applicable full checks, diff review, and instruction synchronization. Report unrun checks and never overclaim evidence.
+- **Self-update:** Update durable goals, constraints, decisions, routes, and gates in the same change that alters them. Do not keep chat logs, daily diaries, duplicate ledgers, generated evidence, or speculative backlogs.
+- **Git:** Inspect status before and after work; stage only intended paths; use coherent, itemized commits; push validated completed work when branch policy permits. Never force-push, bypass protection, publish secrets, or absorb unrelated changes.
+- **YAGNI:** Add a file here only when it has a distinct current owner and consumer. Prefer one section or link over a new document, script, dependency, or abstraction.
+
+
 This is the first file every agent must read. Then read `VERIFICATION.md`. This directory owns global context, constraints, decisions, source inventory, test evidence and every AI/build/test orchestration script. Root AGENTS.md and CLAUDE.md are pointers only. All other application files are public website assets; `.github/workflows/` may contain only thin platform-required launchers. Never put tokens, pairing URLs, names from live sessions or MCP credentials in source or evidence.
 
 ## Product and source of truth
